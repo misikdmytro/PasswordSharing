@@ -19,24 +19,40 @@ namespace PasswordSharing.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("PasswordSharing.Models.Link", b =>
+            modelBuilder.Entity("PasswordSharing.Models.Event", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime>("ExpiresAt");
+                    b.Property<string>("Description")
+                        .IsRequired();
 
-                    b.Property<string>("LinkKey");
-
-                    b.Property<int>("PasswordId");
+                    b.Property<string>("Type")
+                        .IsRequired();
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PasswordId")
-                        .IsUnique();
+                    b.ToTable("Events");
+                });
 
-                    b.ToTable("Links");
+            modelBuilder.Entity("PasswordSharing.Models.HttpMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Method")
+                        .IsRequired();
+
+                    b.Property<DateTime>("RequstedAt");
+
+                    b.Property<string>("Url")
+                        .IsRequired();
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HttpMessages");
                 });
 
             modelBuilder.Entity("PasswordSharing.Models.Password", b =>
@@ -48,17 +64,13 @@ namespace PasswordSharing.Migrations
                     b.Property<string>("Encoded")
                         .IsRequired();
 
+                    b.Property<DateTime>("ExpiresAt");
+
+                    b.Property<int>("Status");
+
                     b.HasKey("Id");
 
                     b.ToTable("Passwords");
-                });
-
-            modelBuilder.Entity("PasswordSharing.Models.Link", b =>
-                {
-                    b.HasOne("PasswordSharing.Models.Password", "Password")
-                        .WithOne()
-                        .HasForeignKey("PasswordSharing.Models.Link", "PasswordId")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

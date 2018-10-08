@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
+using PasswordSharing.Constants;
 using PasswordSharing.Contracts;
 using PasswordSharing.Models;
 
@@ -17,9 +18,9 @@ namespace PasswordSharing.Services
 			_encryptService = encryptService;
 		}
 
-		public Password Encode(string password)
+		public Password Encode(string password, TimeSpan expiration)
 		{
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				try
 				{
@@ -36,7 +37,9 @@ namespace PasswordSharing.Services
 						return new Password
 						{
 							Encoded = encoded,
-							Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyStr))
+							Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyStr)),
+                            Status = PasswordStatus.Valid,
+                            ExpiresAt = DateTime.Now.Add(expiration)
 						};
 					}
 				}

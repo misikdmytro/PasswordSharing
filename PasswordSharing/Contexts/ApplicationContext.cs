@@ -7,9 +7,10 @@ namespace PasswordSharing.Contexts
 	public class ApplicationContext : DbContext
 	{
 		public DbSet<Password> Passwords { get; set; }
-		public DbSet<Link> Links { get; set; }
+		public DbSet<Event> Events { get; set; }
+		public DbSet<HttpMessage> HttpMessages { get; set; }
 
-		public ApplicationContext(DbContextOptions options) : base(options)
+        public ApplicationContext(DbContextOptions options) : base(options)
 		{
 			Database.Migrate();
 		}
@@ -17,7 +18,8 @@ namespace PasswordSharing.Contexts
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.ApplyConfiguration(new PasswordEntityTypeConfiguration());
-			modelBuilder.ApplyConfiguration(new LinkEntityTypeConfiguration());
+			modelBuilder.ApplyConfiguration(new EventEntityTypeConfiguration());
+			modelBuilder.ApplyConfiguration(new HttpMessageEntityTypeConfiguration());
 		}
 	}
 }

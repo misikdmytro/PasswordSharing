@@ -1,6 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using PasswordSharing.Algorithms;
+using PasswordSharing.Constants;
 using Shouldly;
 using Xunit;
 
@@ -19,7 +20,7 @@ namespace PasswordSharing.UnitTests
 		public void EncryptionShouldWorkCorrect()
 		{
 			// Arrange
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				var pubKey = csp.ExportParameters(false);
 				var privKey = csp.ExportParameters(true);
@@ -39,7 +40,7 @@ namespace PasswordSharing.UnitTests
 		public void EncryptionShouldWorkCorrectWithOnlyOnePrivateKey()
 		{
 			// Arrange
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				var privKey = csp.ExportParameters(true);
 
@@ -61,13 +62,13 @@ namespace PasswordSharing.UnitTests
 			const string str = "helloworld";
 
 			RSAParameters pubKey;
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				pubKey = csp.ExportParameters(false);
 			}
 
 			RSAParameters privKey;
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				privKey = csp.ExportParameters(true);
 			}

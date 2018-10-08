@@ -1,13 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +12,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PasswordSharing.Algorithms;
 using PasswordSharing.Contracts;
+using PasswordSharing.Events;
+using PasswordSharing.Events.Contracts;
 using PasswordSharing.Models;
 using PasswordSharing.Repositories;
 using PasswordSharing.Services;
-using PasswordSharing.Web.Exceptions;
 using PasswordSharing.Web.MediatorRequests;
 using PasswordSharing.Web.Middlewares;
+using Swashbuckle.AspNetCore.Swagger;
+using EventHandler = PasswordSharing.Events.EventHandler;
 
 namespace PasswordSharing.Web
 {
@@ -38,13 +38,18 @@ namespace PasswordSharing.Web
 		{
 			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-			services.AddDbContext<Contexts.ApplicationContext>(optionsBuilder =>
+		    services.AddSwaggerGen(c =>
+		    {
+		        c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+
+		        var filePath = Path.Combine(AppContext.BaseDirectory, "PasswordSharing.Web.xml");
+		        c.IncludeXmlComments(filePath);
+            });
+
+            services.AddDbContext<Contexts.ApplicationContext>(optionsBuilder =>
 			{
 				optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
 			});
-
-			var expirationSection = Configuration.GetSection("ExpirationTime");
-			var expiration = expirationSection.Get<ExpirationTime>();
 
 			var builder = new ContainerBuilder();
 
@@ -54,24 +59,26 @@ namespace PasswordSharing.Web
 			builder.RegisterType<EncryptService>()
 				.As<IEncryptService>();
 
-			builder.RegisterType<RandomStringGenerator>()
-				.As<IStringGenerator>();
-
 			builder.RegisterType<PasswordBuilder>()
 				.As<IPasswordBuilder>();
 
-			builder.RegisterType<LinkBuilder>()
-				.As<ILinkBuilder>();
+		    builder.RegisterType<EventTracker>()
+		        .As<IEventTracker>();
 
-			builder.Register(_ => expiration);
+		    builder.RegisterType<EventHandler>()
+		        .As<IEventHandler<PasswordCreated>>()
+		        .As<IEventHandler<PasswordStatusChanged>>();
 
 			builder.RegisterType<DbRepository<Password>>()
 				.As<IDbRepository<Password>>();
 
-			builder.RegisterType<LinkRepository>()
-				.As<ILinkRepository>();
+		    builder.RegisterType<DbRepository<Event>>()
+		        .As<IDbRepository<Event>>();
 
-			builder.Populate(services);
+		    builder.RegisterType<DbRepository<HttpMessage>>()
+		        .As<IDbRepository<HttpMessage>>();
+
+            builder.Populate(services);
 
 			builder.RegisterType<Mediator>()
 				.As<IMediator>()
@@ -112,8 +119,14 @@ namespace PasswordSharing.Web
 
 			//app.UseHttpsRedirection();
 			app.UseExceptionHandlerMiddleware();
+			app.UseHttpTraficMiddleware();
 
 			app.UseMvc();
-		}
+		    app.UseSwagger();
+		    app.UseSwaggerUI(c =>
+		    {
+		        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+		    });
+        }
 	}
 }

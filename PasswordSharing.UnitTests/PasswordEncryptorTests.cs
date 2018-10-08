@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
 using Moq;
+using PasswordSharing.Constants;
 using PasswordSharing.Contracts;
 using PasswordSharing.Models;
 using PasswordSharing.Services;
@@ -28,13 +29,15 @@ namespace PasswordSharing.UnitTests
 		{
 			// Arrange
 			const string str = "helloworld";
+		    var expiration = TimeSpan.FromHours(2);
 
-			// Act
-			var password = _encryptor.Encode(str);
+		    // Act
+		    var password = _encryptor.Encode(str, expiration);
 
 			// Assert
 			_encryptServiceMock.Verify(x => x.Encode(str, It.IsAny<RSAParameters>()), Times.Once);
 			password.Key.ShouldBeNullOrEmpty();
+            (password.ExpiresAt - DateTime.Now - expiration).ShouldBeLessThan(TimeSpan.FromMilliseconds(100));
 		}
 
 		[Fact]
@@ -44,8 +47,8 @@ namespace PasswordSharing.UnitTests
 			const string str = "helloworld";
 
 			// Act
-			var password1 = _encryptor.Encode(str);
-			var password2 = _encryptor.Encode(str);
+			var password1 = _encryptor.Encode(str, TimeSpan.MaxValue);
+			var password2 = _encryptor.Encode(str, TimeSpan.MaxValue);
 
 			// Assert
 			password1.Key.ShouldNotBe(password2.Key);
@@ -56,7 +59,7 @@ namespace PasswordSharing.UnitTests
 		{
 			// Arrange
 			const string str = "helloworld";
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				var key = csp.ExportParameters(true);
 

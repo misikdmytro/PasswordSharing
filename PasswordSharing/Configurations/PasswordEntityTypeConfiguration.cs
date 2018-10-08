@@ -10,7 +10,9 @@ namespace PasswordSharing.Configurations
 		{
 			builder.HasKey(p => p.Id);
 			builder.Property(p => p.Encoded).IsRequired();
-			builder.Ignore(p => p.Key);
+		    builder.Property(p => p.Status).IsRequired();
+		    builder.Property(p => p.ExpiresAt).IsRequired();
+            builder.Ignore(p => p.Key);
 		}
 	}
 }

@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using PasswordSharing.Contracts;
+using PasswordSharing.Events;
+using PasswordSharing.Events.Contracts;
+using PasswordSharing.Models;
 using PasswordSharing.Web.Exceptions;
 
 namespace PasswordSharing.Web.MediatorRequests
@@ -23,40 +27,58 @@ namespace PasswordSharing.Web.MediatorRequests
 	public class RetrievePasswordHandler : IRequestHandler<RetrievePasswordRequest, string>
 	{
 		private readonly IPasswordBuilder _passwordBuilder;
-		private readonly ILinkRepository _linkRepository;
+	    private readonly IDbRepository<Password> _passwordRepository;
+	    private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
 
-		public RetrievePasswordHandler(IPasswordBuilder passwordBuilder, ILinkRepository linkRepository)
+        public RetrievePasswordHandler(IPasswordBuilder passwordBuilder, 
+            IDbRepository<Password> passwordRepository,
+            IEventHandler<PasswordStatusChanged> eventHandler)
 		{
 			_passwordBuilder = passwordBuilder;
-			_linkRepository = linkRepository;
+		    _passwordRepository = passwordRepository;
+		    _eventHandler = eventHandler;
 		}
 
 		public async Task<string> Handle(RetrievePasswordRequest request, CancellationToken cancellationToken)
 		{
-			var link = await _linkRepository.GetByPasswordId(request.PasswordId);
+			var password = (await _passwordRepository.FindAsync(x => x.Id == request.PasswordId))
+                .SingleOrDefault();
 
-			if (link == null)
+			if (password == null)
 			{
 				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link not exists");
 			}
 
-			await _linkRepository.DeleteByPasswordId(request.PasswordId);
+		    if (password.Status != PasswordStatus.Valid)
+		    {
+		        throw new HttpResponseException(HttpStatusCode.BadRequest, "Link is not valid");
+		    }
 
-			if (link.ExpiresAt < DateTime.Now)
+            if (password.ExpiresAt < DateTime.Now)
 			{
+                var model = new PasswordStatusChanged(password, PasswordStatus.Expired);
+			    await _eventHandler.When(model);
+
 				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link expired");
 			}
-
-			var password = link.Password;
+            
 			password.Key = request.Key;
 
 			try
 			{
-				return _passwordBuilder.Decode(password);
+                var result = _passwordBuilder.Decode(password);
+
+                var model = new PasswordStatusChanged(password, PasswordStatus.Used);
+			    await _eventHandler.When(model);
+
+                return result;
 			}
 			catch (Exception)
 			{
-				throw new HttpResponseException(HttpStatusCode.BadRequest, "Incorrect link");
+                var model = new PasswordStatusChanged(password, PasswordStatus.Breaked);
+			    await _eventHandler.When(model);
+
+                throw new HttpResponseException(HttpStatusCode.BadRequest, "Incorrect link");
 			}
 		}
 	}

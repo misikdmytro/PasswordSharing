@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using PasswordSharing.Constants;
 using PasswordSharing.Contracts;
 
 namespace PasswordSharing.Algorithms
@@ -9,7 +10,7 @@ namespace PasswordSharing.Algorithms
 	{
 		public string Encode(string str, RSAParameters publicKey)
 		{
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				try
 				{
@@ -28,7 +29,7 @@ namespace PasswordSharing.Algorithms
 
 		public string Decode(string str, RSAParameters privateKey)
 		{
-			using (var csp = new RSACryptoServiceProvider(2048))
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
 			{
 				try
 				{
