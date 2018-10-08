@@ -40,6 +40,9 @@ namespace PasswordSharing.Web
 
 			ApplicationContainer = builder.Build();
 
+			//var str = File.ReadAllText(@"privateKey.xml");
+			//var privateKey = PrivateKey.FromString(str);
+
 			return new AutofacServiceProvider(ApplicationContainer);
 		}
 

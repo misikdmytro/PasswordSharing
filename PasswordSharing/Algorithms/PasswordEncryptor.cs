@@ -1,7 +1,4 @@
-﻿using System.IO;
-using System.Security.Cryptography;
-using System.Xml.Serialization;
-using PasswordSharing.Contracts;
+﻿using PasswordSharing.Contracts;
 using PasswordSharing.Models;
 
 namespace PasswordSharing.Algorithms
@@ -9,40 +6,32 @@ namespace PasswordSharing.Algorithms
 	public class PasswordEncryptor
 	{
 		private readonly IEncryptService _encryptService;
+		private readonly IRsaParametersBuilder _rsaParametersBuilder;
 
-		public PasswordEncryptor(IEncryptService encryptService)
+		public PasswordEncryptor(IEncryptService encryptService, IRsaParametersBuilder rsaParametersBuilder)
 		{
 			_encryptService = encryptService;
+			_rsaParametersBuilder = rsaParametersBuilder;
 		}
 
-		public Password Encode(string password, RSAParameters publicKey)
+		public Password Encode(string password, PublicKey publicKey)
 		{
-			using (var sw = new StringWriter())
-			{
-				var xs = new XmlSerializer(typeof(RSAParameters));
-				xs.Serialize(sw, publicKey);
-				var pubKeyString = sw.ToString();
+			var pubKeyString = publicKey.ToString();
+			var @params = _rsaParametersBuilder.Build(publicKey);
 
-				return new Password
-				{
-					PublicKey = pubKeyString,
-					Encoded = _encryptService.Encode(password, publicKey)
-				};
-			}
+			return new Password
+			{
+				PublicKey = pubKeyString,
+				Encoded = _encryptService.Encode(password, @params)
+			};
 		}
 
-		public string Decode(Password password, RSAParameters privateKey)
+		public string Decode(Password password, PrivateKey privateKey)
 		{
-			using (var sr = new StringReader(password.PublicKey))
-			{
-				var xs = new XmlSerializer(typeof(RSAParameters));
-				var pubKey = (RSAParameters)xs.Deserialize(sr);
+			var publicKey = PublicKey.FromString(password.PublicKey);
+			var key = _rsaParametersBuilder.Build(publicKey, privateKey);
 
-				privateKey.Modulus = pubKey.Modulus;
-				privateKey.Exponent = pubKey.Exponent;
-
-				return _encryptService.Decode(password.Encoded, privateKey);
-			}
+			return _encryptService.Decode(password.Encoded, key);
 		}
 	}
 }
