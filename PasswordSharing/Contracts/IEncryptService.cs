@@ -1,8 +1,10 @@
-﻿namespace PasswordSharing.Contracts
+﻿using System.Security.Cryptography;
+
+namespace PasswordSharing.Contracts
 {
 	public interface IEncryptService
 	{
-		string Decrypt(string str);
-		string Encrypt(string str);
+		string Decode(string str, RSAParameters privateKey);
+		string Encode(string str, RSAParameters publicKey);
 	}
 }

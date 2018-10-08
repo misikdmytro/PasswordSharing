@@ -8,24 +8,50 @@ namespace PasswordSharing.UnitTests
 {
 	public class EncryptServiceTests
 	{
+		private readonly EncryptService _service;
+
+		public EncryptServiceTests()
+		{
+			_service = new EncryptService();
+		}
+
 		[Fact]
 		public void EncryptionShouldWorkCorrect()
 		{
 			// Arrange
-			var csp = new RSACryptoServiceProvider(2048);
-			var pubKey = csp.ExportParameters(false);
-			var privKey = csp.ExportParameters(true);
+			using (var csp = new RSACryptoServiceProvider(2048))
+			{
+				var pubKey = csp.ExportParameters(false);
+				var privKey = csp.ExportParameters(true);
 
-			var service = new EncryptService(new RSAAlgoParameters(pubKey, privKey));
+				var str = "helloworld";
 
-			var str = "helloworld";
+				// Act
+				var encoded = _service.Encode(str, pubKey);
+				var decoded = _service.Decode(encoded, privKey);
 
-			// Act
-			var encoded = service.Encrypt(str);
-			var decoded = service.Decrypt(encoded);
+				// Assert
+				decoded.ShouldBe(str);
+			}
+		}
 
-			// Assert
-			decoded.ShouldBe(str);
+		[Fact]
+		public void EncryptionShouldWorkCorrectWithOnlyOnePrivateKey()
+		{
+			// Arrange
+			using (var csp = new RSACryptoServiceProvider(2048))
+			{
+				var privKey = csp.ExportParameters(true);
+
+				var str = "helloworld";
+
+				// Act
+				var encoded = _service.Encode(str, privKey);
+				var decoded = _service.Decode(encoded, privKey);
+
+				// Assert
+				decoded.ShouldBe(str);
+			}
 		}
 
 		[Fact]
@@ -34,17 +60,21 @@ namespace PasswordSharing.UnitTests
 			// Arrange
 			const string str = "helloworld";
 
-			var csp = new RSACryptoServiceProvider(2048);
-			var pubKey = csp.ExportParameters(false);
+			RSAParameters pubKey;
+			using (var csp = new RSACryptoServiceProvider(2048))
+			{
+				pubKey = csp.ExportParameters(false);
+			}
 
-			csp = new RSACryptoServiceProvider(2048);
-			var privKey = csp.ExportParameters(true);
-
-			var service = new EncryptService(new RSAAlgoParameters(pubKey, privKey));
+			RSAParameters privKey;
+			using (var csp = new RSACryptoServiceProvider(2048))
+			{
+				privKey = csp.ExportParameters(true);
+			}
 
 			// Act
-			var encoded = service.Encrypt(str);
-			Action decodedAction = () => service.Decrypt(encoded);
+			var encoded = _service.Encode(str, pubKey);
+			Action decodedAction = () => _service.Decode(encoded, privKey);
 
 			// Assert
 			decodedAction.ShouldThrow<Exception>();
