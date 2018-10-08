@@ -1,8 +1,13 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Serialization;
 using Moq;
-using PasswordSharing.Algorithms;
 using PasswordSharing.Contracts;
 using PasswordSharing.Models;
+using PasswordSharing.Services;
+using Shouldly;
 using Xunit;
 
 namespace PasswordSharing.UnitTests
@@ -10,14 +15,12 @@ namespace PasswordSharing.UnitTests
 	public class PasswordEncryptorTests
 	{
 		private readonly Mock<IEncryptService> _encryptServiceMock;
-		private readonly Mock<IRsaParametersBuilder> _builderMock;
-		private readonly PasswordEncryptor _encryptor;
+		private readonly IPasswordBuilder _encryptor;
 
 		public PasswordEncryptorTests()
 		{
 			_encryptServiceMock = new Mock<IEncryptService>();
-			_builderMock = new Mock<IRsaParametersBuilder>();
-			_encryptor = new PasswordEncryptor(_encryptServiceMock.Object, _builderMock.Object);
+			_encryptor = new PasswordBuilder(_encryptServiceMock.Object);
 		}
 
 		[Fact]
@@ -27,28 +30,50 @@ namespace PasswordSharing.UnitTests
 			const string str = "helloworld";
 
 			// Act
-			var password = _encryptor.Encode(str, new PublicKey());
+			var password = _encryptor.Encode(str);
 
 			// Assert
 			_encryptServiceMock.Verify(x => x.Encode(str, It.IsAny<RSAParameters>()), Times.Once);
-			_builderMock.Verify(x => x.Build(It.IsAny<PublicKey>()), Times.Once);
+			password.Key.ShouldBeNullOrEmpty();
 		}
 
+		[Fact]
+		public void EncodeShouldGenerateDifferentKeys()
+		{
+			// Arrange
+			const string str = "helloworld";
+
+			// Act
+			var password1 = _encryptor.Encode(str);
+			var password2 = _encryptor.Encode(str);
+
+			// Assert
+			password1.Key.ShouldNotBe(password2.Key);
+		}
 
 		[Fact]
 		public void DecodeShouldDoIt()
 		{
 			// Arrange
 			const string str = "helloworld";
+			using (var csp = new RSACryptoServiceProvider(2048))
+			{
+				var key = csp.ExportParameters(true);
 
-			var publickKeyStr = new PublicKey().ToString();
+				using (var sw = new StringWriter())
+				{
+					var xs = new XmlSerializer(typeof(RSAParameters));
+					xs.Serialize(sw, key);
 
-			// Act
-			_encryptor.Decode(new Password { Encoded = str, PublicKey = publickKeyStr }, new PrivateKey());
+					var keyStr = sw.ToString();
 
-			// Assert
-			_encryptServiceMock.Verify(x => x.Decode(str, It.IsAny<RSAParameters>()), Times.Once);
-			_builderMock.Verify(x => x.Build(It.IsAny<PublicKey>(), It.IsAny<PrivateKey>()), Times.Once);
+					// Act
+					_encryptor.Decode(new Password { Encoded = str, Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyStr)) });
+
+					// Assert
+					_encryptServiceMock.Verify(x => x.Decode(str, It.IsAny<RSAParameters>()), Times.Once);
+				}
+			}
 		}
 	}
 }

@@ -10,7 +10,7 @@ using PasswordSharing.Contexts;
 namespace PasswordSharing.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20181008073115_Initial")]
+    [Migration("20181008132008_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,6 +29,8 @@ namespace PasswordSharing.Migrations
 
                     b.Property<DateTime>("ExpiresAt");
 
+                    b.Property<string>("LinkKey");
+
                     b.Property<int>("PasswordId");
 
                     b.HasKey("Id");
@@ -46,9 +48,6 @@ namespace PasswordSharing.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Encoded")
-                        .IsRequired();
-
-                    b.Property<string>("PublicKey")
                         .IsRequired();
 
                     b.HasKey("Id");

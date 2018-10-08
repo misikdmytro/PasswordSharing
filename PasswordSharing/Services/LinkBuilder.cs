@@ -4,7 +4,7 @@ using PasswordSharing.Models;
 
 namespace PasswordSharing.Services
 {
-	public class LinkBuilder
+	public class LinkBuilder : ILinkBuilder
 	{
 		private const int LinkIdLength = 16;
 		private readonly IStringGenerator _stringGenerator;
@@ -22,7 +22,7 @@ namespace PasswordSharing.Services
 			{
 				Password = password,
 				ExpiresAt = DateTime.Now.Add(expiration),
-				LinkKey = linkKey
+				LinkKey = password.Key
 			};
 		}
 	}

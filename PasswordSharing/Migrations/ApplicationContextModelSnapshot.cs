@@ -27,6 +27,8 @@ namespace PasswordSharing.Migrations
 
                     b.Property<DateTime>("ExpiresAt");
 
+                    b.Property<string>("LinkKey");
+
                     b.Property<int>("PasswordId");
 
                     b.HasKey("Id");
@@ -44,9 +46,6 @@ namespace PasswordSharing.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Encoded")
-                        .IsRequired();
-
-                    b.Property<string>("PublicKey")
                         .IsRequired();
 
                     b.HasKey("Id");

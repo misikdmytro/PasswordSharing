@@ -14,7 +14,6 @@ namespace PasswordSharing.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    PublicKey = table.Column<string>(nullable: false),
                     Encoded = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
@@ -28,6 +27,7 @@ namespace PasswordSharing.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    LinkKey = table.Column<string>(nullable: true),
                     PasswordId = table.Column<int>(nullable: false),
                     ExpiresAt = table.Column<DateTime>(nullable: false)
                 },

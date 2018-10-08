@@ -11,10 +11,18 @@ namespace PasswordSharing.Algorithms
 		{
 			using (var csp = new RSACryptoServiceProvider(2048))
 			{
-				csp.ImportParameters(publicKey);
-				var bytes = Encoding.Unicode.GetBytes(str);
-				var encoded = csp.Encrypt(bytes, false);
-				return Convert.ToBase64String(encoded);
+				try
+				{
+					csp.ImportParameters(publicKey);
+					var bytes = Encoding.Unicode.GetBytes(str);
+					var encoded = csp.Encrypt(bytes, false);
+					return Convert.ToBase64String(encoded);
+				}
+				finally
+				{
+					csp.PersistKeyInCsp = false;
+					csp.Clear();
+				}
 			}
 		}
 
@@ -22,10 +30,18 @@ namespace PasswordSharing.Algorithms
 		{
 			using (var csp = new RSACryptoServiceProvider(2048))
 			{
-				csp.ImportParameters(privateKey);
-				var bytes = Convert.FromBase64String(str);
-				var decoded = csp.Decrypt(bytes, false);
-				return Encoding.Unicode.GetString(decoded);
+				try
+				{
+					csp.ImportParameters(privateKey);
+					var bytes = Convert.FromBase64String(str);
+					var decoded = csp.Decrypt(bytes, false);
+					return Encoding.Unicode.GetString(decoded);
+				}
+				finally
+				{
+					csp.PersistKeyInCsp = false;
+					csp.Clear();
+				}
 			}
 		}
 	}

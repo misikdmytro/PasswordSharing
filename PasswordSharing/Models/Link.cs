@@ -2,7 +2,7 @@
 
 namespace PasswordSharing.Models
 {
-	public class Link
+	public class Link : IIDentifiable
 	{
 		public int Id { get; set; }
 		public string LinkKey { get; set; }
