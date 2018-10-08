@@ -36,7 +36,7 @@ namespace PasswordSharing.UnitTests
 
 			// Assert
 			_encryptServiceMock.Verify(x => x.Encode(str, It.IsAny<RSAParameters>()), Times.Once);
-			password.Key.ShouldBeNullOrEmpty();
+			password.Key.ShouldNotBeNullOrEmpty();
             (password.ExpiresAt - DateTime.Now - expiration).ShouldBeLessThan(TimeSpan.FromMilliseconds(100));
 		}
 
@@ -47,8 +47,8 @@ namespace PasswordSharing.UnitTests
 			const string str = "helloworld";
 
 			// Act
-			var password1 = _encryptor.Encode(str, TimeSpan.MaxValue);
-			var password2 = _encryptor.Encode(str, TimeSpan.MaxValue);
+			var password1 = _encryptor.Encode(str, TimeSpan.FromSeconds(1));
+			var password2 = _encryptor.Encode(str, TimeSpan.FromSeconds(1));
 
 			// Assert
 			password1.Key.ShouldNotBe(password2.Key);
