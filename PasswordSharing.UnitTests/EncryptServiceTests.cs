@@ -16,7 +16,7 @@ namespace PasswordSharing.UnitTests
 			var pubKey = csp.ExportParameters(false);
 			var privKey = csp.ExportParameters(true);
 
-			var service = new EncryptService(pubKey, privKey);
+			var service = new EncryptService(new RSAAlgoParameters(pubKey, privKey));
 
 			var str = "helloworld";
 
@@ -32,15 +32,15 @@ namespace PasswordSharing.UnitTests
 		public void EncryptionShouldbeDeniedIfWrongKeyProvided()
 		{
 			// Arrange
+			const string str = "helloworld";
+
 			var csp = new RSACryptoServiceProvider(2048);
 			var pubKey = csp.ExportParameters(false);
 
 			csp = new RSACryptoServiceProvider(2048);
 			var privKey = csp.ExportParameters(true);
 
-			var service = new EncryptService(pubKey, privKey);
-
-			var str = "helloworld";
+			var service = new EncryptService(new RSAAlgoParameters(pubKey, privKey));
 
 			// Act
 			var encoded = service.Encrypt(str);

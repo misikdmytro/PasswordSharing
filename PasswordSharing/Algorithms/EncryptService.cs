@@ -7,20 +7,18 @@ namespace PasswordSharing.Algorithms
 {
 	public class EncryptService : IEncryptService
 	{
-		private readonly RSAParameters _publicKey;
-		private readonly RSAParameters _privateKey;
+		private readonly IRSAAlgoParameters _parameters;
 
-		public EncryptService(RSAParameters publicKey, RSAParameters privateKey)
+		public EncryptService(IRSAAlgoParameters parameters)
 		{
-			_publicKey = publicKey;
-			_privateKey = privateKey;
+			_parameters = parameters;
 		}
 
 		public string Encrypt(string str)
 		{
 			using (var csp = new RSACryptoServiceProvider(2048))
 			{
-				csp.ImportParameters(_publicKey);
+				csp.ImportParameters(_parameters.PublicKey);
 				var bytes = Encoding.Unicode.GetBytes(str);
 				var encoded = csp.Encrypt(bytes, false);
 				return Convert.ToBase64String(encoded);
@@ -31,7 +29,7 @@ namespace PasswordSharing.Algorithms
 		{
 			using (var csp = new RSACryptoServiceProvider(2048))
 			{
-				csp.ImportParameters(_privateKey);
+				csp.ImportParameters(_parameters.PrivateKey);
 				var bytes = Convert.FromBase64String(str);
 				var decoded = csp.Decrypt(bytes, false);
 				return Encoding.Unicode.GetString(decoded);

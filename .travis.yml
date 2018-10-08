@@ -1,0 +1,13 @@
+language: csharp
+solution: PasswordSharing.sln
+mono: none
+dotnet: 2.1.0
+install:
+  - dotnet restore PasswordSharing.sln
+script:
+  - dotnet build
+  - dotnet test PasswordSharing.UnitTests/PasswordSharing.UnitTests.csproj
+branches:
+  only:
+    - gh-pages
+    - /.*/
