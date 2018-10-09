@@ -1,0 +1,460 @@
+[1mdiff --git a/PasswordSharing.Web/Controllers/PasswordController.cs b/PasswordSharing.Web/Controllers/PasswordController.cs[m
+[1mindex 792c33b..38509b1 100644[m
+[1m--- a/PasswordSharing.Web/Controllers/PasswordController.cs[m
+[1m+++ b/PasswordSharing.Web/Controllers/PasswordController.cs[m
+[36m@@ -56,7 +56,7 @@[m [mnamespace PasswordSharing.Web.Controllers[m
+         /// <response code="400">Several reasons: link expired or incorrect URL used</response>[m
+         /// <response code="500">Internal Server Error</response>[m
+         [HttpGet("{passwordId}", Name = "GetPassword")][m
+[31m-        [ProducesResponseType(typeof(PasswordInModel), 200)][m
+[32m+[m[32m        [ProducesResponseType(typeof(PasswordOutModel), 200)][m
+         [ProducesResponseType(400)][m
+         [ProducesResponseType(500)][m
+         public async Task<IActionResult> Password([FromRoute]int passwordId,[m
+[1mdiff --git a/PasswordSharing.Web/Models/PasswordInModel.cs b/PasswordSharing.Web/Models/PasswordInModel.cs[m
+[1mindex 2497810..7e34fb7 100644[m
+[1m--- a/PasswordSharing.Web/Models/PasswordInModel.cs[m
+[1m+++ b/PasswordSharing.Web/Models/PasswordInModel.cs[m
+[36m@@ -1,4 +1,6 @@[m
+[31m-﻿namespace PasswordSharing.Web.Models[m
+[32m+[m[32m﻿using Newtonsoft.Json;[m
+[32m+[m
+[32m+[m[32mnamespace PasswordSharing.Web.Models[m
+ {[m
+     /// <summary>[m
+     /// Input password model[m
+[36m@@ -8,10 +10,12 @@[m
+         /// <summary>[m
+         /// Password to encode[m
+         /// </summary>[m
+[32m+[m[32m        [JsonProperty(Required = Required.Always)][m
+ 		public string Password { get; set; }[m
+         /// <summary>[m
+         /// Expiration time (in seconds)[m
+         /// </summary>[m
+[32m+[m[32m        [JsonProperty(Required = Required.Always)][m
+         public int ExpiresIn { get; set; }[m
+ 	}[m
+ }[m
+[1mdiff --git a/PasswordSharing.Web/PasswordSharing.Web.csproj b/PasswordSharing.Web/PasswordSharing.Web.csproj[m
+[1mindex d27115b..b13d616 100644[m
+[1m--- a/PasswordSharing.Web/PasswordSharing.Web.csproj[m
+[1m+++ b/PasswordSharing.Web/PasswordSharing.Web.csproj[m
+[36m@@ -17,6 +17,7 @@[m
+   <ItemGroup>[m
+     <PackageReference Include="Autofac" Version="4.8.1" />[m
+     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.0" />[m
+[32m+[m[32m    <PackageReference Include="FluentScheduler" Version="5.3.0" />[m
+     <PackageReference Include="MediatR" Version="5.1.0" />[m
+     <PackageReference Include="Microsoft.AspNetCore.App" />[m
+     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.0.1916590" />[m
+[1mdiff --git a/PasswordSharing.Web/Startup.cs b/PasswordSharing.Web/Startup.cs[m
+[1mindex 4ac7c1a..80e3277 100644[m
+[1m--- a/PasswordSharing.Web/Startup.cs[m
+[1m+++ b/PasswordSharing.Web/Startup.cs[m
+[36m@@ -3,6 +3,7 @@[m [musing System.IO;[m
+ using System.Reflection;[m
+ using Autofac;[m
+ using Autofac.Extensions.DependencyInjection;[m
+[32m+[m[32musing FluentScheduler;[m
+ using MediatR;[m
+ using Microsoft.AspNetCore.Builder;[m
+ using Microsoft.AspNetCore.Hosting;[m
+[36m@@ -11,14 +12,18 @@[m [musing Microsoft.EntityFrameworkCore;[m
+ using Microsoft.Extensions.Configuration;[m
+ using Microsoft.Extensions.DependencyInjection;[m
+ using PasswordSharing.Algorithms;[m
+[32m+[m[32musing PasswordSharing.Contexts;[m
+ using PasswordSharing.Contracts;[m
+ using PasswordSharing.Events;[m
+ using PasswordSharing.Events.Contracts;[m
+ using PasswordSharing.Models;[m
+ using PasswordSharing.Repositories;[m
+ using PasswordSharing.Services;[m
+[32m+[m[32musing PasswordSharing.Web.Jobs;[m
+[32m+[m[32musing PasswordSharing.Web.Jobs.Factories;[m
+ using PasswordSharing.Web.MediatorRequests;[m
+ using PasswordSharing.Web.Middlewares;[m
+[32m+[m[32musing PasswordSharing.Web.Registries;[m
+ using Swashbuckle.AspNetCore.Swagger;[m
+ using EventHandler = PasswordSharing.Events.EventHandler;[m
+ [m
+[36m@@ -38,15 +43,15 @@[m [mnamespace PasswordSharing.Web[m
+ 		{[m
+ 			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);[m
+ [m
+[31m-		    services.AddSwaggerGen(c =>[m
+[31m-		    {[m
+[31m-		        c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });[m
+[32m+[m			[32mservices.AddSwaggerGen(c =>[m
+[32m+[m			[32m{[m
+[32m+[m				[32mc.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });[m
+ [m
+[31m-		        var filePath = Path.Combine(AppContext.BaseDirectory, "PasswordSharing.Web.xml");[m
+[31m-		        c.IncludeXmlComments(filePath);[m
+[31m-            });[m
+[32m+[m				[32mvar filePath = Path.Combine(AppContext.BaseDirectory, "PasswordSharing.Web.xml");[m
+[32m+[m				[32mc.IncludeXmlComments(filePath);[m
+[32m+[m			[32m});[m
+ [m
+[31m-            services.AddDbContext<Contexts.ApplicationContext>(optionsBuilder =>[m
+[32m+[m			[32mservices.AddDbContext<Contexts.ApplicationContext>(optionsBuilder =>[m
+ 			{[m
+ 				optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));[m
+ 			});[m
+[36m@@ -62,28 +67,30 @@[m [mnamespace PasswordSharing.Web[m
+ 			builder.RegisterType<PasswordBuilder>()[m
+ 				.As<IPasswordBuilder>();[m
+ [m
+[31m-		    builder.RegisterType<EventTracker>()[m
+[31m-		        .As<IEventTracker>();[m
+[32m+[m			[32mbuilder.RegisterType<EventTracker>()[m
+[32m+[m				[32m.As<IEventTracker>();[m
+ [m
+[31m-		    builder.RegisterType<EventHandler>()[m
+[31m-		        .As<IEventHandler<PasswordCreated>>()[m
+[31m-		        .As<IEventHandler<PasswordStatusChanged>>();[m
+[32m+[m			[32mbuilder.RegisterType<EventHandler>()[m
+[32m+[m				[32m.As<IEventHandler<PasswordCreated>>()[m
+[32m+[m				[32m.As<IEventHandler<PasswordStatusChanged>>();[m
+ [m
+ 			builder.RegisterType<DbRepository<Password>>()[m
+ 				.As<IDbRepository<Password>>();[m
+ [m
+[31m-		    builder.RegisterType<DbRepository<Event>>()[m
+[31m-		        .As<IDbRepository<Event>>();[m
+[32m+[m			[32mbuilder.RegisterType<DbRepository<Event>>()[m
+[32m+[m				[32m.As<IDbRepository<Event>>();[m
+ [m
+[31m-		    builder.RegisterType<DbRepository<HttpMessage>>()[m
+[31m-		        .As<IDbRepository<HttpMessage>>();[m
+[32m+[m			[32mbuilder.RegisterType<DbRepository<HttpMessage>>()[m
+[32m+[m				[32m.As<IDbRepository<HttpMessage>>();[m
+ [m
+[31m-            builder.Populate(services);[m
+[32m+[m			[32mbuilder.Populate(services);[m
+ [m
+ 			builder.RegisterType<Mediator>()[m
+ 				.As<IMediator>()[m
+ 				.InstancePerLifetimeScope();[m
+ [m
+[32m+[m			[32mbuilder.RegisterType<DbCleanupJob>();[m
+[32m+[m
+ 			// request handlers[m
+ 			builder.Register<ServiceFactory>(context =>[m
+ 			{[m
+[36m@@ -122,11 +129,22 @@[m [mnamespace PasswordSharing.Web[m
+ 			app.UseHttpTraficMiddleware();[m
+ [m
+ 			app.UseMvc();[m
+[31m-		    app.UseSwagger();[m
+[31m-		    app.UseSwaggerUI(c =>[m
+[31m-		    {[m
+[31m-		        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");[m
+[31m-		    });[m
+[31m-        }[m
+[32m+[m			[32mapp.UseSwagger();[m
+[32m+[m			[32mapp.UseSwaggerUI(c =>[m
+[32m+[m			[32m{[m
+[32m+[m				[32mc.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");[m
+[32m+[m			[32m});[m
+[32m+[m
+[32m+[m			[32musing (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())[m
+[32m+[m			[32m{[m
+[32m+[m				[32mvar context = serviceScope.ServiceProvider.GetService<ApplicationContext>();[m
+[32m+[m				[32mcontext.Database.Migrate();[m
+[32m+[m			[32m}[m
+[32m+[m
+[32m+[m			[32mAppContainer.Container = ApplicationContainer;[m
+[32m+[m			[32mJobManager.JobFactory = new JobFactory();[m
+[32m+[m			[32mJobManager.UseUtcTime();[m
+[32m+[m			[32mJobManager.Initialize(new AppRegistry());[m
+[32m+[m		[32m}[m
+ 	}[m
+ }[m
+[1mdiff --git a/PasswordSharing.Web/appsettings.Development.json b/PasswordSharing.Web/appsettings.Development.json[m
+[1mindex 37dcea7..95479e5 100644[m
+[1m--- a/PasswordSharing.Web/appsettings.Development.json[m
+[1m+++ b/PasswordSharing.Web/appsettings.Development.json[m
+[36m@@ -7,12 +7,5 @@[m
+ 	"ConnectionStrings": {[m
+ 		"DefaultConnection": "Server=.;Database=PasswordSharing;Trusted_Connection=True;MultipleActiveResultSets=true"[m
+ 	},[m
+[31m-	"ExpirationTime": {[m
+[31m-		"Days": 0,[m
+[31m-		"Hours": 0,[m
+[31m-		"Minutes": 0,[m
+[31m-		"Seconds": 15,[m
+[31m-		"Milliseconds": 0[m
+[31m-	},[m
+ 	"AllowedHosts": "*"[m
+ }[m
+[1mdiff --git a/PasswordSharing.Web/appsettings.json b/PasswordSharing.Web/appsettings.json[m
+[1mindex 6fde668..95479e5 100644[m
+[1m--- a/PasswordSharing.Web/appsettings.json[m
+[1m+++ b/PasswordSharing.Web/appsettings.json[m
+[36m@@ -7,12 +7,5 @@[m
+ 	"ConnectionStrings": {[m
+ 		"DefaultConnection": "Server=.;Database=PasswordSharing;Trusted_Connection=True;MultipleActiveResultSets=true"[m
+ 	},[m
+[31m-	"ExpirationTime": {[m
+[31m-		"Days": 0,[m
+[31m-		"Hours": 0,[m
+[31m-		"Minutes": 15,[m
+[31m-		"Seconds": 0,[m
+[31m-		"Milliseconds": 0[m
+[31m-	},[m
+ 	"AllowedHosts": "*"[m
+ }[m
+[1mdiff --git a/PasswordSharing/Configurations/EventEntityTypeConfiguration.cs b/PasswordSharing/Configurations/EventEntityTypeConfiguration.cs[m
+[1mindex d4f24d6..dd484a5 100644[m
+[1m--- a/PasswordSharing/Configurations/EventEntityTypeConfiguration.cs[m
+[1m+++ b/PasswordSharing/Configurations/EventEntityTypeConfiguration.cs[m
+[36m@@ -1,5 +1,4 @@[m
+[31m-﻿using System;[m
+[31m-using Microsoft.EntityFrameworkCore;[m
+[32m+[m[32m﻿using Microsoft.EntityFrameworkCore;[m
+ using Microsoft.EntityFrameworkCore.Metadata.Builders;[m
+ using PasswordSharing.Models;[m
+ [m
+[36m@@ -12,6 +11,7 @@[m [mnamespace PasswordSharing.Configurations[m
+             builder.HasKey(x => x.Id);[m
+             builder.Property(x => x.Description).IsRequired();[m
+             builder.Property(x => x.Type).IsRequired();[m
+[32m+[m	[32m        builder.HasOne(x => x.Password).WithMany().HasForeignKey(x => x.PasswordId);[m
+         }[m
+     }[m
+ }[m
+[1mdiff --git a/PasswordSharing/Contexts/ApplicationContext.cs b/PasswordSharing/Contexts/ApplicationContext.cs[m
+[1mindex 23c4d2b..2a1c707 100644[m
+[1m--- a/PasswordSharing/Contexts/ApplicationContext.cs[m
+[1m+++ b/PasswordSharing/Contexts/ApplicationContext.cs[m
+[36m@@ -4,7 +4,7 @@[m [musing PasswordSharing.Models;[m
+ [m
+ namespace PasswordSharing.Contexts[m
+ {[m
+[31m-	public class ApplicationContext : DbContext[m
+[32m+[m	[32mpublic sealed class ApplicationContext : DbContext[m
+ 	{[m
+ 		public DbSet<Password> Passwords { get; set; }[m
+ 		public DbSet<Event> Events { get; set; }[m
+[36m@@ -12,7 +12,6 @@[m [mnamespace PasswordSharing.Contexts[m
+ [m
+         public ApplicationContext(DbContextOptions options) : base(options)[m
+ 		{[m
+[31m-			Database.Migrate();[m
+ 		}[m
+ [m
+ 		protected override void OnModelCreating(ModelBuilder modelBuilder)[m
+[1mdiff --git a/PasswordSharing/Events/Contracts/IEvent.cs b/PasswordSharing/Events/Contracts/IEvent.cs[m
+[1mindex 93851e6..b347e9c 100644[m
+[1m--- a/PasswordSharing/Events/Contracts/IEvent.cs[m
+[1m+++ b/PasswordSharing/Events/Contracts/IEvent.cs[m
+[36m@@ -2,5 +2,6 @@[m
+ {[m
+     public interface IEvent[m
+     {[m
+[32m+[m	[32m    int PasswordId { get; }[m
+     }[m
+ }[m
+[1mdiff --git a/PasswordSharing/Events/Contracts/IEventTracker.cs b/PasswordSharing/Events/Contracts/IEventTracker.cs[m
+[1mindex 45e5d5a..93f3d64 100644[m
+[1m--- a/PasswordSharing/Events/Contracts/IEventTracker.cs[m
+[1m+++ b/PasswordSharing/Events/Contracts/IEventTracker.cs[m
+[36m@@ -5,6 +5,6 @@[m [mnamespace PasswordSharing.Events.Contracts[m
+ {[m
+     public interface IEventTracker[m
+     {[m
+[31m-        Task<Event> Register(object description);[m
+[32m+[m[32m        Task<Event> Register(IEvent description);[m
+     }[m
+ }[m
+[1mdiff --git a/PasswordSharing/Events/EventTracker.cs b/PasswordSharing/Events/EventTracker.cs[m
+[1mindex ce9a135..156b3b4 100644[m
+[1m--- a/PasswordSharing/Events/EventTracker.cs[m
+[1m+++ b/PasswordSharing/Events/EventTracker.cs[m
+[36m@@ -7,26 +7,27 @@[m [musing PasswordSharing.Models;[m
+ [m
+ namespace PasswordSharing.Events[m
+ {[m
+[31m-    public class EventTracker : IEventTracker[m
+[31m-    {[m
+[31m-        private readonly IDbRepository<Event> _eventRepository;[m
+[32m+[m	[32mpublic class EventTracker : IEventTracker[m
+[32m+[m	[32m{[m
+[32m+[m		[32mprivate readonly IDbRepository<Event> _eventRepository;[m
+ [m
+[31m-        public EventTracker(IDbRepository<Event> eventRepository)[m
+[31m-        {[m
+[31m-            _eventRepository = eventRepository;[m
+[31m-        }[m
+[32m+[m		[32mpublic EventTracker(IDbRepository<Event> eventRepository)[m
+[32m+[m		[32m{[m
+[32m+[m			[32m_eventRepository = eventRepository;[m
+[32m+[m		[32m}[m
+ [m
+[31m-        public async Task<Event> Register(object description)[m
+[31m-        {[m
+[31m-            var @event = new Event[m
+[31m-            {[m
+[31m-                Type = description.GetType().Name,[m
+[31m-                Description = JsonConvert.SerializeObject(description)[m
+[31m-            };[m
+[32m+[m		[32mpublic async Task<Event> Register(IEvent description)[m
+[32m+[m		[32m{[m
+[32m+[m			[32mvar @event = new Event[m
+[32m+[m			[32m{[m
+[32m+[m				[32mType = description.GetType().Name,[m
+[32m+[m				[32mDescription = JsonConvert.SerializeObject(description),[m
+[32m+[m				[32mPasswordId = description.PasswordId[m
+[32m+[m			[32m};[m
+ [m
+[31m-            await _eventRepository.AddAsync(@event);[m
+[32m+[m			[32mawait _eventRepository.AddAsync(@event);[m
+ [m
+[31m-            return @event;[m
+[31m-        }[m
+[31m-    }[m
+[32m+[m			[32mreturn @event;[m
+[32m+[m		[32m}[m
+[32m+[m	[32m}[m
+ }[m
+[1mdiff --git a/PasswordSharing/Migrations/20181008190355_Initial.Designer.cs b/PasswordSharing/Migrations/20181008190355_Initial.Designer.cs[m
+[1mdeleted file mode 100644[m
+[1mindex d141abd..0000000[m
+[1m--- a/PasswordSharing/Migrations/20181008190355_Initial.Designer.cs[m
+[1m+++ /dev/null[m
+[36m@@ -1,80 +0,0 @@[m
+[31m-﻿// <auto-generated />[m
+[31m-using System;[m
+[31m-using Microsoft.EntityFrameworkCore;[m
+[31m-using Microsoft.EntityFrameworkCore.Infrastructure;[m
+[31m-using Microsoft.EntityFrameworkCore.Metadata;[m
+[31m-using Microsoft.EntityFrameworkCore.Migrations;[m
+[31m-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;[m
+[31m-using PasswordSharing.Contexts;[m
+[31m-[m
+[31m-namespace PasswordSharing.Migrations[m
+[31m-{[m
+[31m-    [DbContext(typeof(ApplicationContext))][m
+[31m-    [Migration("20181008190355_Initial")][m
+[31m-    partial class Initial[m
+[31m-    {[m
+[31m-        protected override void BuildTargetModel(ModelBuilder modelBuilder)[m
+[31m-        {[m
+[31m-#pragma warning disable 612, 618[m
+[31m-            modelBuilder[m
+[31m-                .HasAnnotation("ProductVersion", "2.1.3-rtm-32065")[m
+[31m-                .HasAnnotation("Relational:MaxIdentifierLength", 128)[m
+[31m-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);[m
+[31m-[m
+[31m-            modelBuilder.Entity("PasswordSharing.Models.Event", b =>[m
+[31m-                {[m
+[31m-                    b.Property<int>("Id")[m
+[31m-                        .ValueGeneratedOnAdd()[m
+[31m-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);[m
+[31m-[m
+[31m-                    b.Property<string>("Description")[m
+[31m-                        .IsRequired();[m
+[31m-[m
+[31m-                    b.Property<string>("Type")[m
+[31m-                        .IsRequired();[m
+[31m-[m
+[31m-                    b.HasKey("Id");[m
+[31m-[m
+[31m-                    b.ToTable("Events");[m
+[31m-                });[m
+[31m-[m
+[31m-            modelBuilder.Entity("PasswordSharing.Models.HttpMessage", b =>[m
+[31m-                {[m
+[31m-                    b.Property<int>("Id")[m
+[31m-                        .ValueGeneratedOnAdd()[m
+[31m-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);[m
+[31m-[m
+[31m-                    b.Property<string>("Method")[m
+[31m-                        .IsRequired();[m
+[31m-[m
+[31m-                    b.Property<DateTime>("RequstedAt");[m
+[31m-[m
+[31m-                    b.Property<string>("Url")[m
+[31m-                        .IsRequired();[m
+[31m-[m
+[31m-                    b.HasKey("Id");[m
+[31m-[m
+[31m-                    b.ToTable("HttpMessages");[m
+[31m-                });[m
+[31m-[m
+[31m-            modelBuilder.Entity("PasswordSharing.Models.Password", b =>[m
+[31m-                {[m
+[31m-                    b.Property<int>("Id")[m
+[31m-                        .ValueGeneratedOnAdd()[m
+[31m-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);[m
+[31m-[m
+[31m-                    b.Property<string>("Encoded")[m
+[31m-                        .IsRequired();[m
+[31m-[m
+[31m-                    b.Property<DateTime>("ExpiresAt");[m
+[31m-[m
+[31m-                    b.Property<int>("Status");[m
+[31m-[m
+[31m-                    b.HasKey("Id");[m
+[31m-[m
+[31m-                    b.ToTable("Passwords");[m
+[31m-                });[m
+[31m-#pragma warning restore 612, 618[m
+[31m-        }[m
+[31m-    }[m
+[31m-}[m
+[1mdiff --git a/PasswordSharing/Migrations/20181008190355_Initial.cs b/PasswordSharing/Migrations/20181008190355_Initial.cs[m
+[1mdeleted file mode 100644[m
+[1mindex 28eecd3..0000000[m
+[1m--- a/PasswordSharing/Migrations/20181008190355_Initial.cs[m
+[1m+++ /dev/null[m
+[36m@@ -1,68 +0,0 @@[m
+[31m-﻿using System;[m
+[31m-using Microsoft.EntityFrameworkCore.Metadata;[m
+[31m-using Microsoft.EntityFrameworkCore.Migrations;[m
+[31m-[m
+[31m-namespace PasswordSharing.Migrations[m
+[31m-{[m
+[31m-    public partial class Initial : Migration[m
+[31m-    {[m
+[31m-        protected override void Up(MigrationBuilder migrationBuilder)[m
+[31m-        {[m
+[31m-            migrationBuilder.CreateTable([m
+[31m-                name: "Events",[m
+[31m-                columns: table => new[m
+[31m-                {[m
+[31m-                    Id = table.Column<int>(nullable: false)[m
+[31m-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),[m
+[31m-                    Type = table.Column<string>(nullable: false),[m
+[31m-                    Description = table.Column<string>(nullable: false)[m
+[31m-                },[m
+[31m-                constraints: table =>[m
+[31m-                {[m
+[31m-                    table.PrimaryKey("PK_Events", x => x.Id);[m
+[31m-                });[m
+[31m-[m
+[31m-            migrationBuilder.CreateTable([m
+[31m-                name: "HttpMessages",[m
+[31m-                columns: table => new[m
+[31m-                {[m
+[31m-                    Id = table.Column<int>(nullable: false)[m
+[31m-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),[m
+[31m-                    Url = table.Column<string>(nullable: false),[m
+[31m-                    Method = table.Column<string>(nullable: false),[m
+[31m-                    RequstedAt = table.Column<DateTime>(nullable: false)[m
+[31m-                },[m
+[31m-                constraints: table =>[m
+[31m-                {[m
+[31m-                    table.PrimaryKey("PK_HttpMessages", x => x.Id);[m
+[31m-                });[m
+[31m-[m
+[31m-            migrationBuilder.CreateTable([m
+[31m-                name: "Passwords",[m
+[31m-                columns: table => new[m
+[31m-                {[m
+[31m-                    Id = table.Column<int>(nullable: false)[m
+[31m-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),[m
+[31m-                    Encoded = table.Column<string>(nullable: false),[m
+[31m-    

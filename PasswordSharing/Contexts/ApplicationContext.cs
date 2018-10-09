@@ -4,7 +4,7 @@ using PasswordSharing.Models;
 
 namespace PasswordSharing.Contexts
 {
-	public class ApplicationContext : DbContext
+	public sealed class ApplicationContext : DbContext
 	{
 		public DbSet<Password> Passwords { get; set; }
 		public DbSet<Event> Events { get; set; }
@@ -12,7 +12,6 @@ namespace PasswordSharing.Contexts
 
         public ApplicationContext(DbContextOptions options) : base(options)
 		{
-			Database.Migrate();
 		}
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

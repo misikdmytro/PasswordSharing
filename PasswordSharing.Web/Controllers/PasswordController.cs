@@ -56,7 +56,7 @@ namespace PasswordSharing.Web.Controllers
         /// <response code="400">Several reasons: link expired or incorrect URL used</response>
         /// <response code="500">Internal Server Error</response>
         [HttpGet("{passwordId}", Name = "GetPassword")]
-        [ProducesResponseType(typeof(PasswordInModel), 200)]
+        [ProducesResponseType(typeof(PasswordOutModel), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> Password([FromRoute]int passwordId,

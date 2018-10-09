@@ -10,7 +10,7 @@ using PasswordSharing.Contexts;
 namespace PasswordSharing.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20181008190355_Initial")]
+    [Migration("20181009072819_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,10 +30,14 @@ namespace PasswordSharing.Migrations
                     b.Property<string>("Description")
                         .IsRequired();
 
+                    b.Property<int>("PasswordId");
+
                     b.Property<string>("Type")
                         .IsRequired();
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PasswordId");
 
                     b.ToTable("Events");
                 });
@@ -73,6 +77,14 @@ namespace PasswordSharing.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Passwords");
+                });
+
+            modelBuilder.Entity("PasswordSharing.Models.Event", b =>
+                {
+                    b.HasOne("PasswordSharing.Models.Password", "Password")
+                        .WithMany()
+                        .HasForeignKey("PasswordId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

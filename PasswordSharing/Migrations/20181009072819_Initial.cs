@@ -9,20 +9,6 @@ namespace PasswordSharing.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Events",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Type = table.Column<string>(nullable: false),
-                    Description = table.Column<string>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Events", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "HttpMessages",
                 columns: table => new
                 {
@@ -51,6 +37,32 @@ namespace PasswordSharing.Migrations
                 {
                     table.PrimaryKey("PK_Passwords", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Events",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Type = table.Column<string>(nullable: false),
+                    Description = table.Column<string>(nullable: false),
+                    PasswordId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Events", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Events_Passwords_PasswordId",
+                        column: x => x.PasswordId,
+                        principalTable: "Passwords",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_PasswordId",
+                table: "Events",
+                column: "PasswordId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

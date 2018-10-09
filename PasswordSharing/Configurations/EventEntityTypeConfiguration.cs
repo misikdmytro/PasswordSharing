@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PasswordSharing.Models;
 
@@ -12,6 +11,7 @@ namespace PasswordSharing.Configurations
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Description).IsRequired();
             builder.Property(x => x.Type).IsRequired();
+	        builder.HasOne(x => x.Password).WithMany().HasForeignKey(x => x.PasswordId);
         }
     }
 }
