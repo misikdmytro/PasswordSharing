@@ -3,8 +3,7 @@
 
 FROM microsoft/dotnet:2.1-aspnetcore-runtime-nanoserver-1709 AS base
 WORKDIR /app
-EXPOSE 55865
-EXPOSE 44391
+EXPOSE 80
 
 FROM microsoft/dotnet:2.1-sdk-nanoserver-1709 AS build
 WORKDIR /src
