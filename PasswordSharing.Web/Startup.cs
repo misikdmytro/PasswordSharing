@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PasswordSharing.Algorithms;
@@ -51,7 +52,7 @@ namespace PasswordSharing.Web
 				c.IncludeXmlComments(filePath);
 			});
 
-			services.AddDbContext<Contexts.ApplicationContext>(optionsBuilder =>
+			services.AddDbContext<ApplicationContext>(optionsBuilder =>
 			{
 				optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
 			});
@@ -138,8 +139,8 @@ namespace PasswordSharing.Web
 			using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
 			{
 				var context = serviceScope.ServiceProvider.GetService<ApplicationContext>();
-				context.Database.Migrate();
-			}
+                context.Database.Migrate();
+            }
 
 			AppContainer.Container = ApplicationContainer;
 			JobManager.JobFactory = new JobFactory();
