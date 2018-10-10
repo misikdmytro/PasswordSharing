@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Security.Cryptography;
 using PasswordSharing.Algorithms;
 using PasswordSharing.Constants;
+using PasswordSharing.Exceptions;
 using Shouldly;
 using Xunit;
 
@@ -33,6 +35,24 @@ namespace PasswordSharing.UnitTests
 
 				// Assert
 				decoded.ShouldBe(str);
+			}
+		}
+
+		[Fact]
+		public void EncryptionShouldThrowExceptionIfMessageBig()
+		{
+			// Arrange
+			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
+			{
+				var pubKey = csp.ExportParameters(false);
+
+				var str = Enumerable.Repeat('a', AlgorithmConstants.MaxMessageSize).ToArray();
+
+				// Act
+				Action encodAction = () => _service.Encode(new string(str), pubKey);
+
+				// Assert
+				encodAction.ShouldThrow<BadLengthException>();
 			}
 		}
 

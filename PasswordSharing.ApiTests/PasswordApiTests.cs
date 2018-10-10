@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
@@ -11,6 +12,7 @@ using PasswordSharing.Web;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using PasswordSharing.Constants;
 using PasswordSharing.Web.Models;
 using Shouldly;
 
@@ -246,6 +248,35 @@ namespace PasswordSharing.ApiTests
 					var key2 = HttpUtility.ParseQueryString(uri2.Query).Get("key");
 
 					key1.ShouldNotBe(key2);
+				}
+			}
+		}
+
+		[Fact]
+		public async Task GenerateApiShouldReturnBadRequestIfMessageWastoLong()
+		{
+			const int maxSize = ((AlgorithmConstants.KeySize - 384) / 8 + 37) / 2;
+
+			using (var httpClient = _factory.CreateClient())
+			using (var request1 = new HttpRequestMessage(HttpMethod.Post, "api/password"))
+			using (var request2 = new HttpRequestMessage(HttpMethod.Post, "api/password"))
+			{
+				var passwordInModel1 = new PasswordInModel { Password = new string(Enumerable.Repeat('s', maxSize).ToArray()), ExpiresIn = 200 };
+				var passwordInModel2 = new PasswordInModel { Password = new string(Enumerable.Repeat('s', maxSize + 1).ToArray()), ExpiresIn = 200 };
+
+				request1.Content = new ObjectContent<PasswordInModel>(passwordInModel1,
+					new JsonMediaTypeFormatter(),
+					MediaTypeNames.Application.Json);
+
+				request2.Content = new ObjectContent<PasswordInModel>(passwordInModel2,
+					new JsonMediaTypeFormatter(),
+					MediaTypeNames.Application.Json);
+
+				using (var response1 = await httpClient.SendAsync(request1))
+				using (var response2 = await httpClient.SendAsync(request2))
+				{
+					response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+					response2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 				}
 			}
 		}

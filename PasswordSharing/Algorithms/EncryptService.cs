@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using PasswordSharing.Constants;
 using PasswordSharing.Contracts;
+using PasswordSharing.Exceptions;
 
 namespace PasswordSharing.Algorithms
 {
@@ -16,6 +17,11 @@ namespace PasswordSharing.Algorithms
 				{
 					csp.ImportParameters(publicKey);
 					var bytes = Encoding.Unicode.GetBytes(str);
+					if (bytes.Length > AlgorithmConstants.MaxMessageSize)
+					{
+						throw new BadLengthException();
+					}
+
 					var encoded = csp.Encrypt(bytes, false);
 					return Convert.ToBase64String(encoded);
 				}

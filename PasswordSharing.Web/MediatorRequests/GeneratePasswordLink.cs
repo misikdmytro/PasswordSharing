@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using PasswordSharing.Contracts;
 using PasswordSharing.Events;
 using PasswordSharing.Events.Contracts;
+using PasswordSharing.Exceptions;
 using PasswordSharing.Models;
+using PasswordSharing.Web.Exceptions;
 
 namespace PasswordSharing.Web.MediatorRequests
 {
@@ -36,13 +39,20 @@ namespace PasswordSharing.Web.MediatorRequests
 
 		public async Task<Password> Handle(GeneratePasswordLinkRequest request, CancellationToken cancellationToken)
 		{
-			var password = _passwordBuilder.Encode(request.Password, 
-                TimeSpan.FromSeconds(request.ExpiresIn));
+			try
+			{
+				var password = _passwordBuilder.Encode(request.Password,
+					TimeSpan.FromSeconds(request.ExpiresIn));
 
-		    var model = new PasswordCreated(password);
-		    await _eventHandler.When(model);
+				var model = new PasswordCreated(password);
+				await _eventHandler.When(model);
 
-			return password;
+				return password;
+			}
+			catch (BadLengthException)
+			{
+				throw new HttpResponseException(HttpStatusCode.BadRequest, "Message is too long");
+			}
 		}
 	}
 }

@@ -30,9 +30,11 @@ namespace PasswordSharing.Web.Controllers
 		/// </summary>
 		/// <param name="inModel">Password model</param>
 		/// <response code="200">Returns share link to password</response>
+		/// <response code="400">Message was too long</response>
 		/// <response code="500">Internal Server Error</response>
 		[HttpPost("", Name = "PasswordGenerator")]
 		[ProducesResponseType(typeof(UrlModel), 200)]
+		[ProducesResponseType(400)]
 		[ProducesResponseType(500)]
 		public async Task<IActionResult> Generate([FromBody, BindRequired]PasswordInModel inModel)
 		{
