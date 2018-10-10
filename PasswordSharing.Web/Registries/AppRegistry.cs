@@ -7,7 +7,7 @@ namespace PasswordSharing.Web.Registries
 	{
 		public AppRegistry()
 		{
-			Schedule<DbCleanupJob>().ToRunNow().AndEvery(1).Days();
+			Schedule<DbCleanupJob>().ToRunNow().AndEvery(15).Minutes();
 		}
 	}
 }

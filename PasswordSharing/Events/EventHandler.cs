@@ -27,7 +27,7 @@ namespace PasswordSharing.Events
 
 		public async Task When(PasswordStatusChanged @event)
 		{
-			@event.Password.Encoded = _stringGenerator.Generate(@event.Password.Encoded.Length / 3);
+			@event.Password.Encoded = _stringGenerator.Generate(@event.Password.Encoded.Length);
 			@event.Password.Status = @event.NewStatus;
 
 			await _repository.UpdateAsync(@event.Password);

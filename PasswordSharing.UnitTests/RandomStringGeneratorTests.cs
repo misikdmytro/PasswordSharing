@@ -30,5 +30,17 @@ namespace PasswordSharing.UnitTests
 			// Assert
 			result.Length.ShouldBe(expectedLength);
 		}
+
+		[Fact]
+		public void GenerateShouldGenerateDifferentStrings()
+		{
+			// Arrange
+			// Act
+			var result1 = _base64StringGenerator.Generate(5);
+			var result2 = _base64StringGenerator.Generate(5);
+
+			// Assert
+			result1.ShouldNotBe(result2);
+		}
 	}
 }
