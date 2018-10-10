@@ -10,7 +10,7 @@ using PasswordSharing.Contexts;
 namespace PasswordSharing.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20181009072819_Initial")]
+    [Migration("20181010083714_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

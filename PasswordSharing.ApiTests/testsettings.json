@@ -4,8 +4,8 @@
 			"Default": "Warning"
 		}
 	},
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=DESKTOP-RT3FPJK\\SQLEXPRESS;Database=PasswordSharing.Tests;Trusted_Connection=True;MultipleActiveResultSets=true",
-  },
+	"ConnectionStrings": {
+		"DefaultConnection": "Server=.;Database=PasswordSharing.Tests;Trusted_Connection=True;MultipleActiveResultSets=true"
+	},
 	"AllowedHosts": "*"
 }

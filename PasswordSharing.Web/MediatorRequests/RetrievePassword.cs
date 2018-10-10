@@ -49,12 +49,12 @@ namespace PasswordSharing.Web.MediatorRequests
 				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link not exists");
 			}
 
-		    if (password.Status != PasswordStatus.Valid)
-		    {
-		        throw new HttpResponseException(HttpStatusCode.BadRequest, "Link is not valid");
-		    }
+			if (password.Status != PasswordStatus.Valid)
+			{
+				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link is not valid");
+			}
 
-            if (password.ExpiresAt < DateTime.Now)
+			if (password.ExpiresAt < DateTime.Now)
 			{
                 var model = new PasswordStatusChanged(password, PasswordStatus.Expired);
 			    await _eventHandler.When(model);
@@ -75,9 +75,6 @@ namespace PasswordSharing.Web.MediatorRequests
 			}
 			catch (Exception)
 			{
-                var model = new PasswordStatusChanged(password, PasswordStatus.Breaked);
-			    await _eventHandler.When(model);
-
                 throw new HttpResponseException(HttpStatusCode.BadRequest, "Incorrect link");
 			}
 		}

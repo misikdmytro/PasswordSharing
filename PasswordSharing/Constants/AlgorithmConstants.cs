@@ -2,6 +2,6 @@
 {
     public static class AlgorithmConstants
     {
-        public const int KeySize = 512;
+        public const int KeySize = 768;
     }
 }

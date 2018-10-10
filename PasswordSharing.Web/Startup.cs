@@ -62,8 +62,8 @@ namespace PasswordSharing.Web
 			builder.RegisterType<EncryptService>()
 				.As<IEncryptService>();
 
-			builder.RegisterType<EncryptService>()
-				.As<IEncryptService>();
+			builder.RegisterType<RandomBase64StringGenerator>()
+				.As<IRandomBase64StringGenerator>();
 
 			builder.RegisterType<PasswordBuilder>()
 				.As<IPasswordBuilder>();
