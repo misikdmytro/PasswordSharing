@@ -32,9 +32,9 @@ namespace PasswordSharing.Web.Controllers
 		/// <response code="200">Returns share link to password</response>
 		/// <response code="500">Internal Server Error</response>
 		[HttpPost("", Name = "PasswordGenerator")]
-		[ProducesResponseType(typeof(string), 200)]
+		[ProducesResponseType(typeof(UrlModel), 200)]
 		[ProducesResponseType(500)]
-		public async Task<IActionResult> Generate([FromBody]PasswordInModel inModel)
+		public async Task<IActionResult> Generate([FromBody, BindRequired]PasswordInModel inModel)
 		{
 			var request = new GeneratePasswordLinkRequest(inModel.Password, inModel.ExpiresIn);
 			var result = await _mediator.Send(request);
@@ -61,7 +61,7 @@ namespace PasswordSharing.Web.Controllers
 		[ProducesResponseType(typeof(PasswordOutModel), 200)]
 		[ProducesResponseType(400)]
 		[ProducesResponseType(500)]
-		public async Task<IActionResult> Password([FromRoute]int passwordId,
+		public async Task<IActionResult> Password([FromRoute, BindRequired]int passwordId,
 			[FromQuery, BindRequired]string key)
 		{
 			var request = new RetrievePasswordRequest(key, passwordId);
