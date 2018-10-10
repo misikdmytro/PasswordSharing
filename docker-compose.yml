@@ -6,6 +6,8 @@ services:
             - "80:80"
         depends_on:
             - db
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Docker
     db:
         image: "microsoft/mssql-server-windows-express"
         environment:
