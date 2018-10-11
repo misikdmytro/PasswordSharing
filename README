@@ -7,7 +7,7 @@ Password Sharing
 	
 	How to run:
 	- Specify connection string in 'appsettings.json' located in 'PasswordSharing.Web' directory
-	- Run 'dotnet run --project PasswordSharing.Web\PasswordSharing.Web.csproj --urls "http://localhost:80"' in solution root folder (where 'PasswordSharing.sln' located)
+	- Run 'dotnet run --project PasswordSharing.Web\PasswordSharing.Web.csproj --urls "http://localhost:8080"' in solution root folder (where 'PasswordSharing.sln' located)
 	
 1.2. requirements to launch application using 'dcoker-compose up':
 	- Windows OS
@@ -25,7 +25,7 @@ Password Sharing
 	- Run 'dotnet test' in solution root folder
 	
 3. API description:
-	- API described on page 'http://localhost:80/swagger' when application run
+	- API described on page 'http://localhost:8080/swagger' when application run
 	- There are 2 API methods:
 		1. Generate password:
 			- Description: method used to encode and share password. Returns link to password.
