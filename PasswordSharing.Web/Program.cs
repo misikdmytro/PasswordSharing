@@ -24,6 +24,7 @@ namespace PasswordSharing.Web
 					config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
 						.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
 				})
+				.UseUrls(new ConfigurationBuilder().AddCommandLine(args).Build()["urls"])
 				.UseStartup<Startup>();
 	}
 }
