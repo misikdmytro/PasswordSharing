@@ -16,6 +16,9 @@ Password Sharing
 	How to run:
 	- Run 'docker-compose up' in solution root folder
 
+	Note:
+	- While you first run web it can fail because of DB SA credentials can be updated after web started. Just run 'docker-compose up' again.
+
 2.2 requirements to launch tests:
 	- Microsoft SQL Server Express;
 	- .NET Core 2.1
