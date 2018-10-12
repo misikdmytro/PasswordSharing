@@ -57,3 +57,4 @@ Password Sharing
 	- it is impossible to decrypt used passwords.
 	- all HTTP requests registered in DB ([dbo].[HttpMessages] table)
 	- all password 'mutations' registered in DB ([dbo].[Events] table)
+	- logging enabled (HTTP requests/responses, SQL queries, etc.)

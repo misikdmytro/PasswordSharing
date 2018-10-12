@@ -16,12 +16,12 @@ namespace PasswordSharing.UnitTests
 	public class PasswordEncryptorTests
 	{
 		private readonly Mock<IEncryptService> _encryptServiceMock;
-		private readonly IPasswordBuilder _encryptor;
+		private readonly IPasswordEncryptor _encryptor;
 
 		public PasswordEncryptorTests()
 		{
 			_encryptServiceMock = new Mock<IEncryptService>();
-			_encryptor = new PasswordBuilder(_encryptServiceMock.Object);
+			_encryptor = new PasswordEncryptor(_encryptServiceMock.Object);
 		}
 
 		[Fact]

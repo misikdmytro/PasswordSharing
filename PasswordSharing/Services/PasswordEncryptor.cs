@@ -9,11 +9,11 @@ using PasswordSharing.Models;
 
 namespace PasswordSharing.Services
 {
-	public class PasswordBuilder : IPasswordBuilder
+	public class PasswordEncryptor : IPasswordEncryptor
 	{
 		private readonly IEncryptService _encryptService;
 
-		public PasswordBuilder(IEncryptService encryptService)
+		public PasswordEncryptor(IEncryptService encryptService)
 		{
 			_encryptService = encryptService;
 		}

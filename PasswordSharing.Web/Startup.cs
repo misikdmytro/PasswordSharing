@@ -65,8 +65,8 @@ namespace PasswordSharing.Web
 			builder.RegisterType<RandomBase64StringGenerator>()
 				.As<IRandomBase64StringGenerator>();
 
-			builder.RegisterType<PasswordBuilder>()
-				.As<IPasswordBuilder>();
+			builder.RegisterType<PasswordEncryptor>()
+				.As<IPasswordEncryptor>();
 
 			builder.RegisterType<EventTracker>()
 				.As<IEventTracker>();

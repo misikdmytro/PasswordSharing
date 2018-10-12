@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentScheduler;
+using Microsoft.Extensions.Logging;
 using PasswordSharing.Contracts;
 using PasswordSharing.Events;
 using PasswordSharing.Events.Contracts;
@@ -11,11 +12,13 @@ namespace PasswordSharing.Web.Jobs
 	{
 		private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
 		private readonly IDbRepository<Password> _repository;
+		private readonly ILogger<DbCleanupJob> _logger;
 
-		public DbCleanupJob(IEventHandler<PasswordStatusChanged> eventHandler, IDbRepository<Password> repository)
+		public DbCleanupJob(IEventHandler<PasswordStatusChanged> eventHandler, IDbRepository<Password> repository, ILogger<DbCleanupJob> logger)
 		{
 			_eventHandler = eventHandler;
 			_repository = repository;
+			_logger = logger;
 		}
 
 		public async void Execute()
@@ -25,7 +28,8 @@ namespace PasswordSharing.Web.Jobs
 			{
 				await _eventHandler.When(new PasswordStatusChanged(password, PasswordStatus.Expired));
 			}
-			Console.WriteLine("DB Updated");
+
+			_logger.LogInformation($"DB Updated - {expired.Length} password(s) expired");
 		}
 	}
 }

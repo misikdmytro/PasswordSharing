@@ -3,6 +3,8 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PasswordSharing.Contracts;
 using PasswordSharing.Events;
 using PasswordSharing.Events.Contracts;
@@ -27,31 +29,39 @@ namespace PasswordSharing.Web.MediatorRequests
 
 	public class GeneratePasswordLinkHandler : IRequestHandler<GeneratePasswordLinkRequest, Password>
 	{
-		private readonly IPasswordBuilder _passwordBuilder;
+		private readonly IPasswordEncryptor _passwordEncryptor;
 	    private readonly IEventHandler<PasswordCreated> _eventHandler;
+		private readonly ILogger<GeneratePasswordLinkHandler> _logger;
 
-        public GeneratePasswordLinkHandler(IPasswordBuilder passwordBuilder, 
-            IEventHandler<PasswordCreated> eventHandler)
+        public GeneratePasswordLinkHandler(IPasswordEncryptor passwordEncryptor, 
+            IEventHandler<PasswordCreated> eventHandler, ILogger<GeneratePasswordLinkHandler> logger)
 		{
-			_passwordBuilder = passwordBuilder;
+			_passwordEncryptor = passwordEncryptor;
 		    _eventHandler = eventHandler;
+			_logger = logger;
 		}
 
 		public async Task<Password> Handle(GeneratePasswordLinkRequest request, CancellationToken cancellationToken)
 		{
 			try
 			{
-				var password = _passwordBuilder.Encode(request.Password,
+				var password = _passwordEncryptor.Encode(request.Password,
 					TimeSpan.FromSeconds(request.ExpiresIn));
 
 				var model = new PasswordCreated(password);
 				await _eventHandler.When(model);
 
+				_logger.LogInformation($"Password with ID {password.Id} encrypted. Valid until {password.ExpiresAt}");
+				_logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password)}");
+
 				return password;
 			}
 			catch (BadLengthException)
 			{
-				throw new HttpResponseException(HttpStatusCode.BadRequest, "Message is too long");
+				const string message = "Message is too long";
+				_logger.LogError(message);
+
+				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
 			}
 		}
 	}

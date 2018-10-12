@@ -4,7 +4,6 @@
     {
         Valid,
         Expired,
-        Used,
-        Breaked
+        Used
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 
 namespace PasswordSharing.Web
 {
@@ -25,6 +26,8 @@ namespace PasswordSharing.Web
 						.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
 				})
 				.UseUrls(new ConfigurationBuilder().AddCommandLine(args).Build()["urls"])
+				.UseSerilog((context, configuration) => configuration
+					.ReadFrom.Configuration(context.Configuration))
 				.UseStartup<Startup>();
 	}
 }

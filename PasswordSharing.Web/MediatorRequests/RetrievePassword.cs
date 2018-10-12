@@ -4,6 +4,8 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PasswordSharing.Contracts;
 using PasswordSharing.Events;
 using PasswordSharing.Events.Contracts;
@@ -26,17 +28,20 @@ namespace PasswordSharing.Web.MediatorRequests
 
 	public class RetrievePasswordHandler : IRequestHandler<RetrievePasswordRequest, string>
 	{
-		private readonly IPasswordBuilder _passwordBuilder;
+		private readonly IPasswordEncryptor _passwordEncryptor;
 	    private readonly IDbRepository<Password> _passwordRepository;
 	    private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
+		private readonly ILogger<RetrievePasswordHandler> _logger;
 
-        public RetrievePasswordHandler(IPasswordBuilder passwordBuilder, 
+        public RetrievePasswordHandler(IPasswordEncryptor passwordEncryptor, 
             IDbRepository<Password> passwordRepository,
-            IEventHandler<PasswordStatusChanged> eventHandler)
+            IEventHandler<PasswordStatusChanged> eventHandler, 
+	        ILogger<RetrievePasswordHandler> logger)
 		{
-			_passwordBuilder = passwordBuilder;
+			_passwordEncryptor = passwordEncryptor;
 		    _passwordRepository = passwordRepository;
 		    _eventHandler = eventHandler;
+			_logger = logger;
 		}
 
 		public async Task<string> Handle(RetrievePasswordRequest request, CancellationToken cancellationToken)
@@ -46,12 +51,20 @@ namespace PasswordSharing.Web.MediatorRequests
 
 			if (password == null)
 			{
-				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link not exists");
+				const string message = "Link not exists";
+				_logger.LogError(message);
+
+				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
 			}
+
+			_logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password)}");
 
 			if (password.Status != PasswordStatus.Valid)
 			{
-				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link is not valid");
+				var message = PrepareErrorMessage(password);
+				_logger.LogError(message);
+
+				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
 			}
 
 			if (password.ExpiresAt < DateTime.Now)
@@ -59,14 +72,19 @@ namespace PasswordSharing.Web.MediatorRequests
                 var model = new PasswordStatusChanged(password, PasswordStatus.Expired);
 			    await _eventHandler.When(model);
 
-				throw new HttpResponseException(HttpStatusCode.BadRequest, "Link expired");
+				var message = PrepareErrorMessage(password);
+				_logger.LogError(message);
+
+				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
 			}
             
 			password.Key = request.Key;
 
 			try
 			{
-                var result = _passwordBuilder.Decode(password);
+				_logger.LogInformation($"Trying to retrieve password with ID {password.Id}");
+
+                var result = _passwordEncryptor.Decode(password);
 
                 var model = new PasswordStatusChanged(password, PasswordStatus.Used);
 			    await _eventHandler.When(model);
@@ -75,7 +93,25 @@ namespace PasswordSharing.Web.MediatorRequests
 			}
 			catch (Exception)
 			{
-                throw new HttpResponseException(HttpStatusCode.BadRequest, "Incorrect link");
+				const string message = "Incorrect link";
+				_logger.LogError(message);
+
+				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+			}
+		}
+
+		private string PrepareErrorMessage(Password password)
+		{
+			switch (password.Status)
+			{
+				case PasswordStatus.Valid:
+					throw new ArgumentException("Password is valid");
+				case PasswordStatus.Expired:
+					return $"Link expired at {password.ExpiresAt}";
+				case PasswordStatus.Used:
+					return "Link has been already used";
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 	}
