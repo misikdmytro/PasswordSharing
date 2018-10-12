@@ -10,7 +10,7 @@ using PasswordSharing.Contexts;
 namespace PasswordSharing.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20181010083714_Initial")]
+    [Migration("20181012183653_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -71,6 +71,10 @@ namespace PasswordSharing.Migrations
                         .IsRequired();
 
                     b.Property<DateTime>("ExpiresAt");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate();
 
                     b.Property<int>("Status");
 

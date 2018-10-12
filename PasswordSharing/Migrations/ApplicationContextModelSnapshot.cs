@@ -70,6 +70,10 @@ namespace PasswordSharing.Migrations
 
                     b.Property<DateTime>("ExpiresAt");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate();
+
                     b.Property<int>("Status");
 
                     b.HasKey("Id");

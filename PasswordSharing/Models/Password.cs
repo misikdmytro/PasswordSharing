@@ -9,5 +9,6 @@ namespace PasswordSharing.Models
 		public string Key { get; set; }
 	    public DateTime ExpiresAt { get; set; }
 	    public PasswordStatus Status { get; set; }
+        public byte[] RowVersion { get; set; }
     }
 }

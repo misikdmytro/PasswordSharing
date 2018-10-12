@@ -13,6 +13,7 @@ namespace PasswordSharing.Configurations
 		    builder.Property(p => p.Status).IsRequired();
 		    builder.Property(p => p.ExpiresAt).IsRequired();
             builder.Ignore(p => p.Key);
+		    builder.Property(x => x.RowVersion).IsRowVersion();
 		}
 	}
 }

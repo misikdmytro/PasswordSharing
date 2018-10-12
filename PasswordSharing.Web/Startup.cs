@@ -73,9 +73,6 @@ namespace PasswordSharing.Web
 				.As<IEventHandler<PasswordCreated>>()
 				.As<IEventHandler<PasswordStatusChanged>>();
 
-			builder.RegisterGeneric(typeof(ConcurrentHelper<>))
-				.As(typeof(IConcurrentHelper<>));
-
 			builder.RegisterGeneric(typeof(DbRepository<>))
 				.As(typeof(IDbRepository<>));
 
