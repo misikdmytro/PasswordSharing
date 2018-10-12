@@ -11,25 +11,36 @@ namespace PasswordSharing.Web.Jobs
 	public class DbCleanupJob : IJob
 	{
 		private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
-		private readonly IDbRepository<Password> _repository;
+		private readonly IConcurrentHelper<Password> _concurrentHelper;
 		private readonly ILogger<DbCleanupJob> _logger;
 
-		public DbCleanupJob(IEventHandler<PasswordStatusChanged> eventHandler, IDbRepository<Password> repository, ILogger<DbCleanupJob> logger)
+		public DbCleanupJob(IEventHandler<PasswordStatusChanged> eventHandler, ILogger<DbCleanupJob> logger,
+			IConcurrentHelper<Password> concurrentHelper)
 		{
 			_eventHandler = eventHandler;
-			_repository = repository;
 			_logger = logger;
+			_concurrentHelper = concurrentHelper;
 		}
 
 		public async void Execute()
 		{
-			var expired = await _repository.FindAsync(x => x.ExpiresAt < DateTime.Now && x.Status == PasswordStatus.Valid);
-			foreach (var password in expired)
+			var expired = await _concurrentHelper.FindAsync(x => x.ExpiresAt < DateTime.Now && x.Status == PasswordStatus.Valid);
+			try
 			{
-				await _eventHandler.When(new PasswordStatusChanged(password, PasswordStatus.Expired));
-			}
+				foreach (var password in expired)
+				{
+					await _eventHandler.When(new PasswordStatusChanged(password.Entity, PasswordStatus.Expired));
+				}
 
-			_logger.LogInformation($"DB Updated - {expired.Length} password(s) expired");
+				_logger.LogInformation($"DB Updated - {expired.Length} password(s) expired");
+			}
+			finally
+			{
+				foreach (var lockWrapper in expired)
+				{
+					lockWrapper.Dispose();
+				}
+			}
 		}
 	}
 }

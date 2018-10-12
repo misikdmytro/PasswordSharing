@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PasswordSharing.Algorithms;
@@ -17,7 +16,6 @@ using PasswordSharing.Contexts;
 using PasswordSharing.Contracts;
 using PasswordSharing.Events;
 using PasswordSharing.Events.Contracts;
-using PasswordSharing.Models;
 using PasswordSharing.Repositories;
 using PasswordSharing.Services;
 using PasswordSharing.Web.Jobs;
@@ -75,14 +73,11 @@ namespace PasswordSharing.Web
 				.As<IEventHandler<PasswordCreated>>()
 				.As<IEventHandler<PasswordStatusChanged>>();
 
-			builder.RegisterType<DbRepository<Password>>()
-				.As<IDbRepository<Password>>();
+			builder.RegisterGeneric(typeof(ConcurrentHelper<>))
+				.As(typeof(IConcurrentHelper<>));
 
-			builder.RegisterType<DbRepository<Event>>()
-				.As<IDbRepository<Event>>();
-
-			builder.RegisterType<DbRepository<HttpMessage>>()
-				.As<IDbRepository<HttpMessage>>();
+			builder.RegisterGeneric(typeof(DbRepository<>))
+				.As(typeof(IDbRepository<>));
 
 			builder.Populate(services);
 
@@ -139,8 +134,8 @@ namespace PasswordSharing.Web
 			using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
 			{
 				var context = serviceScope.ServiceProvider.GetService<ApplicationContext>();
-                context.Database.Migrate();
-            }
+				context.Database.Migrate();
+			}
 
 			AppContainer.Container = ApplicationContainer;
 			JobManager.JobFactory = new JobFactory();

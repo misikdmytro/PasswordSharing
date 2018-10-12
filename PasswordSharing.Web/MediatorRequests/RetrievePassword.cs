@@ -29,74 +29,74 @@ namespace PasswordSharing.Web.MediatorRequests
 	public class RetrievePasswordHandler : IRequestHandler<RetrievePasswordRequest, string>
 	{
 		private readonly IPasswordEncryptor _passwordEncryptor;
-	    private readonly IDbRepository<Password> _passwordRepository;
-	    private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
+		private readonly IConcurrentHelper<Password> _concurrentRepository;
+		private readonly IEventHandler<PasswordStatusChanged> _eventHandler;
 		private readonly ILogger<RetrievePasswordHandler> _logger;
 
-        public RetrievePasswordHandler(IPasswordEncryptor passwordEncryptor, 
-            IDbRepository<Password> passwordRepository,
-            IEventHandler<PasswordStatusChanged> eventHandler, 
-	        ILogger<RetrievePasswordHandler> logger)
+		public RetrievePasswordHandler(IPasswordEncryptor passwordEncryptor,
+			IConcurrentHelper<Password> concurrentRepository,
+			IEventHandler<PasswordStatusChanged> eventHandler, 
+			ILogger<RetrievePasswordHandler> logger)
 		{
 			_passwordEncryptor = passwordEncryptor;
-		    _passwordRepository = passwordRepository;
-		    _eventHandler = eventHandler;
+			_concurrentRepository = concurrentRepository;
+			_eventHandler = eventHandler;
 			_logger = logger;
 		}
 
 		public async Task<string> Handle(RetrievePasswordRequest request, CancellationToken cancellationToken)
 		{
-			var password = (await _passwordRepository.FindAsync(x => x.Id == request.PasswordId))
-                .SingleOrDefault();
-
-			if (password == null)
+			using (var password = await _concurrentRepository.SingleOrDefaultAsync(p => p.Id == request.PasswordId))
 			{
-				const string message = "Link not exists";
-				_logger.LogError(message);
+				if (password.Entity == null)
+				{
+					const string message = "Link not exists";
+					_logger.LogError(message);
 
-				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-			}
+					throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+				}
 
-			_logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password)}");
+				_logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password.Entity)}");
 
-			if (password.Status != PasswordStatus.Valid)
-			{
-				var message = PrepareErrorMessage(password);
-				_logger.LogError(message);
+				if (password.Entity.Status != PasswordStatus.Valid)
+				{
+					var message = PrepareErrorMessage(password.Entity);
+					_logger.LogError(message);
 
-				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-			}
+					throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+				}
 
-			if (password.ExpiresAt < DateTime.Now)
-			{
-                var model = new PasswordStatusChanged(password, PasswordStatus.Expired);
-			    await _eventHandler.When(model);
+				if (password.Entity.ExpiresAt < DateTime.Now)
+				{
+					var model = new PasswordStatusChanged(password.Entity, PasswordStatus.Expired);
+					await _eventHandler.When(model);
 
-				var message = PrepareErrorMessage(password);
-				_logger.LogError(message);
+					var message = PrepareErrorMessage(password.Entity);
+					_logger.LogError(message);
 
-				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-			}
-            
-			password.Key = request.Key;
+					throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+				}
 
-			try
-			{
-				_logger.LogInformation($"Trying to retrieve password with ID {password.Id}");
+				password.Entity.Key = request.Key;
 
-                var result = _passwordEncryptor.Decode(password);
+				try
+				{
+					_logger.LogInformation($"Trying to retrieve password with ID {password.Entity.Id}");
 
-                var model = new PasswordStatusChanged(password, PasswordStatus.Used);
-			    await _eventHandler.When(model);
+					var result = _passwordEncryptor.Decode(password.Entity);
 
-                return result;
-			}
-			catch (Exception)
-			{
-				const string message = "Incorrect link";
-				_logger.LogError(message);
+					var model = new PasswordStatusChanged(password.Entity, PasswordStatus.Used);
+					await _eventHandler.When(model);
 
-				throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+					return result;
+				}
+				catch (Exception)
+				{
+					const string message = "Incorrect link";
+					_logger.LogError(message);
+
+					throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+				}
 			}
 		}
 

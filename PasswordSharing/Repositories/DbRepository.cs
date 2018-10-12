@@ -27,6 +27,14 @@ namespace PasswordSharing.Repositories
 			}
 		}
 
+		public async Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+		{
+			using (var context = GetContext())
+			{
+				return await GetQuery(context).SingleOrDefaultAsync(predicate);
+			}
+		}
+
 		public async Task AddAsync(TEntity entity)
 		{
 			using (var context = GetContext())
@@ -41,29 +49,6 @@ namespace PasswordSharing.Repositories
 			using (var context = GetContext())
 			{
 				context.Entry(entity).State = EntityState.Modified;
-				await context.SaveChangesAsync();
-			}
-		}
-
-		public async Task RemoveAsync(int id)
-		{
-			using (var context = GetContext())
-			{
-				var entity = await context.Set<TEntity>().FirstOrDefaultAsync(x => x.Id == id);
-				context.Set<TEntity>().Remove(entity);
-				await context.SaveChangesAsync();
-			}
-		}
-
-		public async Task ClearAsync()
-		{
-			using (var context = GetContext())
-			{
-				foreach (var entity in context.Set<TEntity>())
-				{
-					context.Remove(entity);
-				}
-
 				await context.SaveChangesAsync();
 			}
 		}

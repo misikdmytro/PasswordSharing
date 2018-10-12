@@ -253,7 +253,7 @@ namespace PasswordSharing.ApiTests
 		}
 
 		[Fact]
-		public async Task GenerateApiShouldReturnBadRequestIfMessageWastoLong()
+		public async Task GenerateApiShouldReturnBadRequestIfMessageWasToLong()
 		{
 			const int maxSize = ((AlgorithmConstants.KeySize - 384) / 8 + 37) / 2;
 
@@ -320,6 +320,49 @@ namespace PasswordSharing.ApiTests
 				}
 
 				await Task.WhenAll(allTasks);
+			}
+		}
+
+		[Fact]
+		public async Task ParallelRetrieveTest()
+		{
+			const int load = 100;
+
+			using (var httpClient = _factory.CreateClient())
+			{
+				for (var i = 0; i < load; i++)
+				{
+					using (var request = new HttpRequestMessage(HttpMethod.Post, "api/password"))
+					{
+						var passwordInModel = new PasswordInModel { Password = "123", ExpiresIn = 100 };
+						request.Content = new ObjectContent<PasswordInModel>(passwordInModel,
+							new JsonMediaTypeFormatter(),
+							MediaTypeNames.Application.Json);
+						using (var response = await httpClient.SendAsync(request))
+						{
+							var content = await response.Content.ReadAsAsync<UrlModel>();
+
+							using (var retrieveRequest1 = new HttpRequestMessage(HttpMethod.Get, content.Url))
+							using (var retrieveRequest2 = new HttpRequestMessage(HttpMethod.Get, content.Url))
+							using (var retrieveResponse1Task = httpClient.SendAsync(retrieveRequest1))
+							using (var retrieveResponse2Task = httpClient.SendAsync(retrieveRequest2))
+							{
+								await Task.WhenAll(retrieveResponse1Task, retrieveResponse2Task);
+
+								if (retrieveResponse1Task.Result.StatusCode == HttpStatusCode.OK)
+								{
+									retrieveResponse1Task.Result.StatusCode.ShouldBe(HttpStatusCode.OK);
+									retrieveResponse2Task.Result.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+								}
+								else
+								{
+									retrieveResponse2Task.Result.StatusCode.ShouldBe(HttpStatusCode.OK);
+									retrieveResponse1Task.Result.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
