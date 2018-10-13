@@ -11,7 +11,7 @@ namespace PasswordSharing.Configurations
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Description).IsRequired();
             builder.Property(x => x.Type).IsRequired();
-	        builder.HasOne(x => x.Password).WithMany().HasForeignKey(x => x.PasswordId);
+	        builder.HasOne(x => x.PasswordGroup).WithMany().HasForeignKey(x => x.PasswordGroupId);
         }
     }
 }

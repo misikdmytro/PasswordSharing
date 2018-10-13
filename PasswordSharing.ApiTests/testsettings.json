@@ -1,11 +1,23 @@
 {
-	"Logging": {
-		"LogLevel": {
-			"Default": "Warning"
-		}
-	},
-	"ConnectionStrings": {
-		"DefaultConnection": "Server=.;Database=PasswordSharing.Tests;Trusted_Connection=True;MultipleActiveResultSets=true"
-	},
-	"AllowedHosts": "*"
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.ColoredConsole", "Serilog.Sinks.File" ],
+    "MinimumLevel": "Debug",
+    "WriteTo": [
+      {
+        "Name": "ColoredConsole"
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs//log.txt",
+          "rollingInterval": "Day"
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=DESKTOP-RT3FPJK\\SQLEXPRESS;Database=PasswordSharing.Tests;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  "AllowedHosts": "*"
 }

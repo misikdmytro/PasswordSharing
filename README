@@ -34,7 +34,7 @@ Password Sharing
 			- Description: method used to encode and share password. Returns link to password.
 			- Method: POST
 			- URL: 'api/password'
-			- Body: { "password": "string", "expiresIn": "int32" }
+			- Body: { "password": ["string"], "expiresIn": "int32" }
 			- OK result: 200 OK
 			- Fail result: 400 Bad Request; 500 Internal Server Error
 		2. Retrieve password:

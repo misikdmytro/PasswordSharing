@@ -3,8 +3,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using PasswordSharing.Contexts;
 using PasswordSharing.Contracts;
 using PasswordSharing.Models;
+using PasswordSharing.Repositories;
 
 namespace PasswordSharing.Web.Middlewares
 {
@@ -20,18 +22,22 @@ namespace PasswordSharing.Web.Middlewares
 
         public async Task Invoke(HttpContext httpContext)
         {
-            var messageHandler = (IDbRepository<HttpMessage>)httpContext.RequestServices
-                .GetService(typeof(IDbRepository<HttpMessage>));
+            var factory = (IContextFactory<ApplicationContext>)httpContext.RequestServices
+                .GetService(typeof(IContextFactory<ApplicationContext>));
 
             var url = httpContext.Request.GetDisplayUrl();
 
-            await messageHandler.AddAsync(new HttpMessage
+            using (var context = factory.CreateContext())
             {
-                RequstedAt = DateTime.Now,
-                Url = url,
-                Method = httpContext.Request.Method
-            });
+                var repository = new DbRepository<HttpMessage>(context);
 
+                await repository.AddAsync(new HttpMessage
+                {
+                    RequstedAt = DateTime.Now,
+                    Url = url,
+                    Method = httpContext.Request.Method
+                });
+            }
             await _next(httpContext);
         }
     }

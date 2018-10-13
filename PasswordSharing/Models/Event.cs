@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string Type { get; set; }
         public string Description { get; set; }
-		public Password Password { get; set; }
-		public int PasswordId { get; set; }
+		public PasswordGroup PasswordGroup { get; set; }
+		public int PasswordGroupId { get; set; }
     }
 }

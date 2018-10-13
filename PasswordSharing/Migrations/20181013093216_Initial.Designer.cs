@@ -10,7 +10,7 @@ using PasswordSharing.Contexts;
 namespace PasswordSharing.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20181012183653_Initial")]
+    [Migration("20181013093216_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,14 +30,14 @@ namespace PasswordSharing.Migrations
                     b.Property<string>("Description")
                         .IsRequired();
 
-                    b.Property<int>("PasswordId");
+                    b.Property<int>("PasswordGroupId");
 
                     b.Property<string>("Type")
                         .IsRequired();
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PasswordId");
+                    b.HasIndex("PasswordGroupId");
 
                     b.ToTable("Events");
                 });
@@ -70,24 +70,47 @@ namespace PasswordSharing.Migrations
                     b.Property<string>("Encoded")
                         .IsRequired();
 
-                    b.Property<DateTime>("ExpiresAt");
+                    b.Property<int>("PasswordGroupId");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate();
 
-                    b.Property<int>("Status");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("PasswordGroupId");
 
                     b.ToTable("Passwords");
                 });
 
+            modelBuilder.Entity("PasswordSharing.Models.PasswordGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("ExpiresAt");
+
+                    b.Property<int>("Status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PasswordGroups");
+                });
+
             modelBuilder.Entity("PasswordSharing.Models.Event", b =>
                 {
-                    b.HasOne("PasswordSharing.Models.Password", "Password")
+                    b.HasOne("PasswordSharing.Models.PasswordGroup", "PasswordGroup")
                         .WithMany()
-                        .HasForeignKey("PasswordId")
+                        .HasForeignKey("PasswordGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("PasswordSharing.Models.Password", b =>
+                {
+                    b.HasOne("PasswordSharing.Models.PasswordGroup")
+                        .WithMany("Passwords")
+                        .HasForeignKey("PasswordGroupId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

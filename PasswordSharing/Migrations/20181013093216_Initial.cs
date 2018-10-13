@@ -24,19 +24,17 @@ namespace PasswordSharing.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Passwords",
+                name: "PasswordGroups",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Encoded = table.Column<string>(nullable: false),
                     ExpiresAt = table.Column<DateTime>(nullable: false),
-                    Status = table.Column<int>(nullable: false),
-                    RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true)
+                    Status = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Passwords", x => x.Id);
+                    table.PrimaryKey("PK_PasswordGroups", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -47,23 +45,49 @@ namespace PasswordSharing.Migrations
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Type = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: false),
-                    PasswordId = table.Column<int>(nullable: false)
+                    PasswordGroupId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_Passwords_PasswordId",
-                        column: x => x.PasswordId,
-                        principalTable: "Passwords",
+                        name: "FK_Events_PasswordGroups_PasswordGroupId",
+                        column: x => x.PasswordGroupId,
+                        principalTable: "PasswordGroups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Passwords",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Encoded = table.Column<string>(nullable: false),
+                    RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
+                    PasswordGroupId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Passwords", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Passwords_PasswordGroups_PasswordGroupId",
+                        column: x => x.PasswordGroupId,
+                        principalTable: "PasswordGroups",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_PasswordId",
+                name: "IX_Events_PasswordGroupId",
                 table: "Events",
-                column: "PasswordId");
+                column: "PasswordGroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Passwords_PasswordGroupId",
+                table: "Passwords",
+                column: "PasswordGroupId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -76,6 +100,9 @@ namespace PasswordSharing.Migrations
 
             migrationBuilder.DropTable(
                 name: "Passwords");
+
+            migrationBuilder.DropTable(
+                name: "PasswordGroups");
         }
     }
 }

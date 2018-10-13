@@ -8,10 +8,10 @@ namespace PasswordSharing.Web.Models
 	public class PasswordInModel
 	{
         /// <summary>
-        /// Password to encode
+        /// Passwords to encode
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-		public string Password { get; set; }
+		public string[] Passwords { get; set; }
         /// <summary>
         /// Expiration time (in seconds)
         /// </summary>

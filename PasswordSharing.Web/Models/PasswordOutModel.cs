@@ -6,8 +6,8 @@
     public class PasswordOutModel
     {
         /// <summary>
-        /// Decoded password
+        /// Decoded passwords
         /// </summary>
-        public string Password { get; set; }
+        public string[] Passwords { get; set; }
     }
 }

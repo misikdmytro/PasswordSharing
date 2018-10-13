@@ -57,8 +57,14 @@ namespace PasswordSharing.Web
 
 			var builder = new ContainerBuilder();
 
-			builder.RegisterType<EncryptService>()
+		    builder.RegisterType<ApplicationContextFactory>()
+		        .As<IContextFactory<ApplicationContext>>();
+
+            builder.RegisterType<EncryptService>()
 				.As<IEncryptService>();
+
+		    builder.RegisterType<RsaKeyGenerator>()
+		        .As<IRsaKeyGenerator>();
 
 			builder.RegisterType<RandomBase64StringGenerator>()
 				.As<IRandomBase64StringGenerator>();
@@ -70,11 +76,8 @@ namespace PasswordSharing.Web
 				.As<IEventTracker>();
 
 			builder.RegisterType<EventHandler>()
-				.As<IEventHandler<PasswordCreated>>()
-				.As<IEventHandler<PasswordStatusChanged>>();
-
-			builder.RegisterGeneric(typeof(DbRepository<>))
-				.As(typeof(IDbRepository<>));
+                .As<IGroupEventHandler<PasswordGroupCreated>>()
+                .As<IGroupEventHandler<PasswordGroupStatusChanged>>();
 
 			builder.Populate(services);
 

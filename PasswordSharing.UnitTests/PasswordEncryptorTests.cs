@@ -1,82 +1,54 @@
-﻿using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using System.Xml.Serialization;
+﻿using System.Security.Cryptography;
 using Moq;
 using PasswordSharing.Constants;
 using PasswordSharing.Contracts;
 using PasswordSharing.Models;
 using PasswordSharing.Services;
-using Shouldly;
 using Xunit;
 
 namespace PasswordSharing.UnitTests
 {
-	public class PasswordEncryptorTests
-	{
-		private readonly Mock<IEncryptService> _encryptServiceMock;
-		private readonly IPasswordEncryptor _encryptor;
+    public class PasswordEncryptorTests
+    {
+        private readonly Mock<IEncryptService> _encryptServiceMock;
+        private readonly IPasswordEncryptor _encryptor;
+        private readonly RSAParameters _parameters;
 
-		public PasswordEncryptorTests()
-		{
-			_encryptServiceMock = new Mock<IEncryptService>();
-			_encryptor = new PasswordEncryptor(_encryptServiceMock.Object);
-		}
+        public PasswordEncryptorTests()
+        {
+            _encryptServiceMock = new Mock<IEncryptService>();
+            _encryptor = new PasswordEncryptor(_encryptServiceMock.Object);
 
-		[Fact]
-		public void EncodeShouldDoIt()
-		{
-			// Arrange
-			const string str = "helloworld";
-		    var expiration = TimeSpan.FromHours(2);
+            using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
+            {
+                _parameters = csp.ExportParameters(true);
+            }
+        }
 
-		    // Act
-		    var password = _encryptor.Encode(str, expiration);
+        [Fact]
+        public void EncodeShouldDoIt()
+        {
+            // Arrange
+            const string str = "helloworld";
 
-			// Assert
-			_encryptServiceMock.Verify(x => x.Encode(str, It.IsAny<RSAParameters>()), Times.Once);
-			password.Key.ShouldNotBeNullOrEmpty();
-            (password.ExpiresAt - DateTime.Now - expiration).ShouldBeLessThan(TimeSpan.FromMilliseconds(100));
-		}
+            // Act
+            var password = _encryptor.Encode(str, _parameters);
 
-		[Fact]
-		public void EncodeShouldGenerateDifferentKeys()
-		{
-			// Arrange
-			const string str = "helloworld";
+            // Assert
+            _encryptServiceMock.Verify(x => x.Encode(str, It.IsAny<RSAParameters>()), Times.Once);
+        }
 
-			// Act
-			var password1 = _encryptor.Encode(str, TimeSpan.FromSeconds(1));
-			var password2 = _encryptor.Encode(str, TimeSpan.FromSeconds(1));
+        [Fact]
+        public void DecodeShouldDoIt()
+        {
+            // Arrange
+            const string str = "helloworld";
 
-			// Assert
-			password1.Key.ShouldNotBe(password2.Key);
-		}
+            // Act
+            _encryptor.Decode(new Password { Encoded = str }, _parameters);
 
-		[Fact]
-		public void DecodeShouldDoIt()
-		{
-			// Arrange
-			const string str = "helloworld";
-			using (var csp = new RSACryptoServiceProvider(AlgorithmConstants.KeySize))
-			{
-				var key = csp.ExportParameters(true);
-
-				using (var sw = new StringWriter())
-				{
-					var xs = new XmlSerializer(typeof(RSAParameters));
-					xs.Serialize(sw, key);
-
-					var keyStr = sw.ToString();
-
-					// Act
-					_encryptor.Decode(new Password { Encoded = str, Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyStr)) });
-
-					// Assert
-					_encryptServiceMock.Verify(x => x.Decode(str, It.IsAny<RSAParameters>()), Times.Once);
-				}
-			}
-		}
-	}
+            // Assert
+            _encryptServiceMock.Verify(x => x.Decode(str, It.IsAny<RSAParameters>()), Times.Once);
+        }
+    }
 }

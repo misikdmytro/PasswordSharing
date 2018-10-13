@@ -5,6 +5,6 @@ namespace PasswordSharing.Events.Contracts
 {
     public interface IEventTracker
     {
-        Task<Event> Register(IEvent description);
+        Task<Event> Register(IGroupEvent description);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace PasswordSharing.Events.Contracts
 {
-    public interface IEventHandler<in TEvent>
-        where TEvent : IEvent
+    public interface IGroupEventHandler<in TEvent>
+        where TEvent : IGroupEvent
     {
         Task When(TEvent @event);
     }
