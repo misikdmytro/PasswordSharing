@@ -1,0 +1,15 @@
+System contains 2 elements:
+- Dataabse - data storage
+- Web - server with HTTP API
+
+1. Ability to vertical scaling:
+    Adding procesing power will make server faster. So that HTTP requests would be handled faster.
+    System can be scale vertically without any restrictions.
+
+2. Ability to horizontal scaling:
+    While new entities (servers) would be added, all servers should still use one database because it is the only central data storage.
+    So new entities can be added, but all server should work with one database.
+    So that server can be shared between processes and machines.
+    Horizontal scheme applied to current server:
+
+    1 Entry point ----> N server machines ---> N server processes ---> 1 database
