@@ -30,15 +30,15 @@ Password Sharing
 3. API description:
 	- API described on page 'http://localhost:8080/swagger' when application run
 	- There are 2 API methods:
-		1. Generate password:
-			- Description: method used to encode and share password. Returns link to password.
+		1. Generate passwords:
+			- Description: method used to encode and share passwords. Returns link to passwords.
 			- Method: POST
 			- URL: 'api/password'
 			- Body: { "password": ["string"], "expiresIn": "int32" }
 			- OK result: 200 OK
 			- Fail result: 400 Bad Request; 500 Internal Server Error
-		2. Retrieve password:
-			- Description: method used to retrieve password by shared link.
+		2. Retrieve passwords:
+			- Description: method used to retrieve passwords by shared link.
 			- Method: GET
 			- URL: 'api/password/{passwordId}?key={key}'
 			- OK Result: 200 OK
