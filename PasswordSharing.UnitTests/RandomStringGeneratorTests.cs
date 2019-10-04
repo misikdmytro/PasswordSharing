@@ -7,11 +7,11 @@ namespace PasswordSharing.UnitTests
 {
 	public class RandomStringGeneratorTests
 	{
-		private readonly IRandomBase64StringGenerator _base64StringGenerator;
+		private readonly IRandomStringGenerator _stringGenerator;
 
 		public RandomStringGeneratorTests()
 		{
-			_base64StringGenerator = new RandomBase64StringGenerator();
+			_stringGenerator = new RandomBase64StringGenerator();
 		}
 
 		[Theory]
@@ -25,7 +25,7 @@ namespace PasswordSharing.UnitTests
 		{
 			// Arrange
 			// Act
-			var result = _base64StringGenerator.Generate(length);
+			var result = _stringGenerator.Generate(length);
 
 			// Assert
 			result.Length.ShouldBe(expectedLength);
@@ -36,8 +36,8 @@ namespace PasswordSharing.UnitTests
 		{
 			// Arrange
 			// Act
-			var result1 = _base64StringGenerator.Generate(5);
-			var result2 = _base64StringGenerator.Generate(5);
+			var result1 = _stringGenerator.Generate(5);
+			var result2 = _stringGenerator.Generate(5);
 
 			// Assert
 			result1.ShouldNotBe(result2);

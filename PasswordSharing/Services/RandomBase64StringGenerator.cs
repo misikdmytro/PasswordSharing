@@ -4,7 +4,7 @@ using PasswordSharing.Interfaces;
 
 namespace PasswordSharing.Services
 {
-	public class RandomBase64StringGenerator : IRandomBase64StringGenerator
+	public class RandomBase64StringGenerator : IRandomStringGenerator
 	{
 		private const string AvailableChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 

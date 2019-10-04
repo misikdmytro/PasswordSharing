@@ -21,7 +21,7 @@ namespace PasswordSharing.Redis
         public async Task<TValue> GetAsync<TKey, TValue>(TKey key)
             where TKey : ICacheKey
         {
-            string value = await _database.StringGetAsync(key.ToString());
+            string value = await _database.StringGetAsync(key.ExtractKey());
             return !string.IsNullOrEmpty(value)
                 ? JsonConvert.DeserializeObject<TValue>(value)
                 : default(TValue);
@@ -30,18 +30,18 @@ namespace PasswordSharing.Redis
         public Task SetAsync<TKey, TValue>(TKey key, TValue value, TimeSpan? expiration)
             where TKey : ICacheKey
         {
-            return _database.StringSetAsync(key.ToString(), JsonConvert.SerializeObject(value), 
+            return _database.StringSetAsync(key.ExtractKey(), JsonConvert.SerializeObject(value), 
                 expiration ?? _defaultExpiration);
         }
 
         public Task RenameAsync<TKey>(TKey oldKey, TKey newKey) where TKey : ICacheKey
         {
-            return _database.KeyRenameAsync(oldKey.ToString(), newKey.ToString());
+            return _database.KeyRenameAsync(oldKey.ExtractKey(), newKey.ExtractKey());
         }
 
         public Task DeleteAsync<TKey>(TKey key) where TKey : ICacheKey
         {
-            return _database.KeyDeleteAsync(key.ToString());
+            return _database.KeyDeleteAsync(key.ExtractKey());
         }
 
         public void Dispose()

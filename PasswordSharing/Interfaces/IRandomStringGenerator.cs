@@ -1,6 +1,6 @@
 ﻿namespace PasswordSharing.Interfaces
 {
-	public interface IRandomBase64StringGenerator
+	public interface IRandomStringGenerator
 	{
 		string Generate(int originalLength);
 	}

@@ -19,7 +19,7 @@ namespace PasswordSharing.Algorithms
 					var bytes = Encoding.Unicode.GetBytes(str);
 					if (bytes.Length > AlgorithmConstants.MaxMessageSize)
 					{
-						throw new BadLengthException();
+						throw new BadLengthException($"Expected max message size is {AlgorithmConstants.MaxMessageSize} but was {bytes.Length}");
 					}
 
 					var encoded = csp.Encrypt(bytes, false);

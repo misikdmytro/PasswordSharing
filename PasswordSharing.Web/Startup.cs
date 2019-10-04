@@ -1,8 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +11,6 @@ using PasswordSharing.Interfaces;
 using PasswordSharing.Redis;
 using PasswordSharing.Services;
 using PasswordSharing.Web.Configs;
-using PasswordSharing.Web.MediatorRequests;
 using PasswordSharing.Web.Middlewares;
 using Serilog;
 using StackExchange.Redis;
@@ -36,7 +32,7 @@ namespace PasswordSharing.Web
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public IServiceProvider ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
             _logger.Information("Starting services configuration...");
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
@@ -52,61 +48,27 @@ namespace PasswordSharing.Web
             RegisterDependencies(services);
 
             _logger.Information("Finished services configuration.");
-            return new AutofacServiceProvider(ApplicationContainer);
         }
 
         private void RegisterDependencies(IServiceCollection services)
         {
             _logger.Information("Starting registering dependencies...");
 
-            var builder = new ContainerBuilder();
-
-            builder.RegisterType<EncryptService>()
-                .As<IEncryptService>();
-
-            builder.RegisterType<RsaKeyGenerator>()
-                .As<IRsaKeyGenerator>();
-
-            builder.RegisterType<RandomBase64StringGenerator>()
-                .As<IRandomBase64StringGenerator>();
-
-            builder.RegisterType<PasswordEncryptor>()
-                .As<IPasswordEncryptor>();
-
-            builder.Populate(services);
+            services.AddTransient<IEncryptService, EncryptService>();
+            services.AddTransient<IKeyGenerator, RsaKeyGenerator>();
+            services.AddTransient<IRandomStringGenerator, RandomBase64StringGenerator>();
+            services.AddTransient<IPasswordEncryptor, PasswordEncryptor>();
 
             var appConfig = Configuration.GetSection("service").Get<ApplicationConfig>();
 
-
             var connectionMultiplexer = ConnectionMultiplexer.Connect(appConfig.ConnectionStrings.Redis.ConnectionString);
-            builder.Register(c =>
-                    new RedisClientFactory(connectionMultiplexer, appConfig.ConnectionStrings.Redis.DefaultExpiration))
-                .As<IRedisClientFactory>();
+            var redisClientFactory = new RedisClientFactory(connectionMultiplexer, appConfig.ConnectionStrings.Redis.DefaultExpiration);
 
-            builder.RegisterType<Mediator>()
-                .As<IMediator>()
-                .InstancePerLifetimeScope();
-
-            // request handlers
-            builder.Register<ServiceFactory>(context =>
-            {
-                var c = context.Resolve<IComponentContext>();
-                return t => c.Resolve(t);
-            });
-
-            // finally register our custom code (individually, or via assembly scanning)
-            // - requests & handlers as transient, i.e. InstancePerDependency()
-            // - pre/post-processors as scoped/per-request, i.e. InstancePerLifetimeScope()
-            // - behaviors as transient, i.e. InstancePerDependency()
-            builder.RegisterAssemblyTypes(typeof(GeneratePasswordLinkRequest).GetTypeInfo().Assembly)
-                .AsImplementedInterfaces();
-
-            ApplicationContainer = builder.Build();
+            services.AddSingleton<IRedisClientFactory, RedisClientFactory>(provider => redisClientFactory);
+            services.AddMediatR(typeof(Startup).Assembly);
 
             _logger.Information("Finished registering dependencies.");
         }
-
-        public IContainer ApplicationContainer { get; private set; }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -122,7 +84,6 @@ namespace PasswordSharing.Web
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
             app.UseExceptionHandlerMiddleware();
 
             app.UseMvc();

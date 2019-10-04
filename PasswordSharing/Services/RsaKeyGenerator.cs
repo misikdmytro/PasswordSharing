@@ -8,7 +8,7 @@ using PasswordSharing.Interfaces;
 
 namespace PasswordSharing.Services
 {
-    public class RsaKeyGenerator : IRsaKeyGenerator
+    public class RsaKeyGenerator : IKeyGenerator
     {
         public RSAParameters GenerateKey()
         {

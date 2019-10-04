@@ -11,7 +11,7 @@ namespace PasswordSharing.Models
             _groupId = groupId;
         }
 
-        public override string ToString()
+        public string ExtractKey()
         {
             return $"password_group_{_groupId}";
         }

@@ -2,7 +2,7 @@
 
 namespace PasswordSharing.Interfaces
 {
-    public interface IRsaKeyGenerator
+    public interface IKeyGenerator
     {
         RSAParameters GenerateKey();
         string ToString(RSAParameters parameters);

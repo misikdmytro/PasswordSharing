@@ -7,7 +7,7 @@ namespace PasswordSharing.UnitTests
 {
     public class RsaKeyGeneratorTests
     {
-        private readonly IRsaKeyGenerator _keyGenerator;
+        private readonly IKeyGenerator _keyGenerator;
 
         public RsaKeyGeneratorTests()
         {

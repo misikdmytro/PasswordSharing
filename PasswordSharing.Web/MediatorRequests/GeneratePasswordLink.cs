@@ -31,10 +31,10 @@ namespace PasswordSharing.Web.MediatorRequests
     {
         private readonly IPasswordEncryptor _passwordEncryptor;
         private readonly IRedisClientFactory _redisClientFactory;
-        private readonly IRsaKeyGenerator _keyGenerator;
+        private readonly IKeyGenerator _keyGenerator;
         private readonly ILogger _logger = Log.ForContext<GeneratePasswordLinkHandler>();
 
-        public GeneratePasswordLinkHandler(IPasswordEncryptor passwordEncryptor, IRsaKeyGenerator keyGenerator, IRedisClientFactory redisClientFactory)
+        public GeneratePasswordLinkHandler(IPasswordEncryptor passwordEncryptor, IKeyGenerator keyGenerator, IRedisClientFactory redisClientFactory)
         {
             _passwordEncryptor = passwordEncryptor;
             _keyGenerator = keyGenerator;

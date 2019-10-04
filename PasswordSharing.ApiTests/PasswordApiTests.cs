@@ -30,8 +30,8 @@ namespace PasswordSharing.ApiTests
                 {
 					var env = builderContext.HostingEnvironment;
 
-                    config.AddJsonFile(Path.Combine(directory, "testsettings.json"), optional: false, reloadOnChange: true)
-						.AddJsonFile($"testsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                    config.AddJsonFile(Path.Combine(directory, "appsettings.json"), optional: false, reloadOnChange: true)
+						.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
                 }));
         }
 
