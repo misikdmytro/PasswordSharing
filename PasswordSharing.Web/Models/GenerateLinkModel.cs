@@ -1,4 +1,6 @@
-﻿namespace PasswordSharing.Web.Models
+﻿using System;
+
+namespace PasswordSharing.Web.Models
 {
     /// <summary>
     /// 'Generate password' response model
@@ -8,7 +10,7 @@
         /// <summary>
         /// Password group ID
         /// </summary>
-        public int PasswordGroupId { get; set; }
+        public Guid PasswordGroupId { get; set; }
         /// <summary>
         /// Key used in link
         /// </summary>

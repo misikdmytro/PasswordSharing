@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
 using PasswordSharing.Constants;
-using PasswordSharing.Contracts;
+using PasswordSharing.Interfaces;
 
 namespace PasswordSharing.Services
 {

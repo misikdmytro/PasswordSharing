@@ -1,7 +1,7 @@
 {
   "Serilog": {
     "Using": [ "Serilog.Sinks.ColoredConsole", "Serilog.Sinks.File" ],
-    "MinimumLevel": "Debug",
+    "MinimumLevel": "Information",
     "WriteTo": [
       {
         "Name": "ColoredConsole"
@@ -16,8 +16,13 @@
     ],
     "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
   },
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=DESKTOP-RT3FPJK\\SQLEXPRESS;Database=PasswordSharing.Tests;Trusted_Connection=True;MultipleActiveResultSets=true"
+  "service": {
+    "connectionStrings": {
+      "redis": {
+        "connectionString": "localhost:6379",
+        "defaultExpiration": "00:15:00"
+      }
+    }
   },
   "AllowedHosts": "*"
 }

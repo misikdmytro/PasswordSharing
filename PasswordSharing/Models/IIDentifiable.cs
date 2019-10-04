@@ -1,7 +1,9 @@
-﻿namespace PasswordSharing.Models
+﻿using System;
+
+namespace PasswordSharing.Models
 {
 	public interface IIDentifiable
 	{
-		int Id { get; set; }
+		Guid Id { get; set; }
 	}
 }

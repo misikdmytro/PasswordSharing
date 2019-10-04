@@ -5,25 +5,20 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using PasswordSharing.Contexts;
-using PasswordSharing.Contracts;
-using PasswordSharing.Events;
-using PasswordSharing.Events.Contracts;
+using PasswordSharing.Interfaces;
 using PasswordSharing.Models;
-using PasswordSharing.Repositories;
 using PasswordSharing.Web.Exceptions;
+using Serilog;
+using StackExchange.Redis;
 
 namespace PasswordSharing.Web.MediatorRequests
 {
     public class RetrievePasswordRequest : IRequest<string[]>
     {
-        public int PasswordGroupId { get; }
+        public Guid PasswordGroupId { get; }
         public string Key { get; }
 
-        public RetrievePasswordRequest(string key, int passwordGroupId)
+        public RetrievePasswordRequest(string key, Guid passwordGroupId)
         {
             Key = key;
             PasswordGroupId = passwordGroupId;
@@ -32,114 +27,77 @@ namespace PasswordSharing.Web.MediatorRequests
 
     public class RetrievePasswordHandler : IRequestHandler<RetrievePasswordRequest, string[]>
     {
+        private readonly IRedisClientFactory _redisClientFactory;
         private readonly IPasswordEncryptor _passwordEncryptor;
-        private readonly IContextFactory<ApplicationContext> _factory;
-        private readonly IGroupEventHandler<PasswordGroupStatusChanged> _eventHandler;
-        private readonly ILogger<RetrievePasswordHandler> _logger;
+        private readonly ILogger _logger = Log.ForContext<RetrievePasswordHandler>();
         private readonly IRsaKeyGenerator _keyGenerator;
 
         public RetrievePasswordHandler(IPasswordEncryptor passwordEncryptor,
-            IGroupEventHandler<PasswordGroupStatusChanged> eventHandler,
-            ILogger<RetrievePasswordHandler> logger, IContextFactory<ApplicationContext> factory,
-            IRsaKeyGenerator keyGenerator)
+            IRsaKeyGenerator keyGenerator, IRedisClientFactory redisClientFactory)
         {
             _passwordEncryptor = passwordEncryptor;
-            _eventHandler = eventHandler;
-            _logger = logger;
-            _factory = factory;
             _keyGenerator = keyGenerator;
+            _redisClientFactory = redisClientFactory;
         }
 
         public async Task<string[]> Handle(RetrievePasswordRequest request, CancellationToken cancellationToken)
         {
-            using (var context = _factory.CreateContext())
+            _logger.Information("Get group with id {passwordGroupId}", request.PasswordGroupId);
+
+            var redisClient = _redisClientFactory.GetClient();
+            var oldCacheKey = new PasswordGroupKey(request.PasswordGroupId);
+            var newCacheKey = new PasswordGroupKey(Guid.NewGuid());
+
+            _logger.Information("Renaming key {oldKey} to {newKey}", oldCacheKey, newCacheKey);
+
+            try
             {
-                var passwordGroupRepository = new PasswordGroupRepository(context);
-                var passwordGroup = await passwordGroupRepository
-                    .SingleOrDefaultAsync(x => x.Id == request.PasswordGroupId);
-
-                if (passwordGroup == null)
-                {
-                    const string message = "Link not exists";
-                    _logger.LogError(message);
-
-                    throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-                }
-
-                if (passwordGroup.Status != PasswordStatus.Valid)
-                {
-                    var message = PrepareErrorMessage(passwordGroup);
-                    _logger.LogError(message);
-
-                    throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-                }
-
-                if (passwordGroup.ExpiresAt < DateTime.Now)
-                {
-                    var model = new PasswordGroupStatusChanged(passwordGroup, PasswordStatus.Expired);
-                    await _eventHandler.When(model);
-
-                    var message = PrepareErrorMessage(passwordGroup);
-                    _logger.LogError(message);
-
-                    throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-                }
-
-                var key = _keyGenerator.FromString(request.Key);
-
-                var result = passwordGroup.Passwords
-                    .Select(password => Handle(password, key))
-                    .ToArray();
-
-                try
-                {
-                    await _eventHandler.When(new PasswordGroupStatusChanged(passwordGroup, PasswordStatus.Used));
-                }
-                catch (DbUpdateConcurrencyException ex)
-                {
-                    _logger.LogError(ex.Message);
-
-                    // repeat again to return correct reason
-                    return await Handle(request, cancellationToken);
-                }
-
-                return result;
+                await redisClient.RenameAsync(oldCacheKey, newCacheKey);
             }
+            catch (RedisServerException rse)
+            {
+                const string message = "Link not exists";
+                _logger.Error(rse.Message);
+
+                throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+            }
+
+            var passwordGroup = await redisClient.GetAsync<PasswordGroupKey, PasswordGroup>(newCacheKey);
+            await redisClient.DeleteAsync(newCacheKey);
+
+            if (passwordGroup == null)
+            {
+                const string message = "Link not exists";
+                _logger.Error(message);
+
+                throw new HttpResponseException(HttpStatusCode.BadRequest, message);
+            }
+
+            var key = _keyGenerator.FromString(request.Key);
+
+            var result = passwordGroup.Passwords
+                .Select(password => Handle(password, key))
+                .ToArray();
+
+            return result;
         }
 
         private string Handle(Password password, RSAParameters key)
         {
-            _logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password)}");
-
             try
             {
-                _logger.LogInformation($"Trying to retrieve password with ID {password.Id}");
+                _logger.Debug("Trying to retrieve password {@password}", password);
 
                 var result = _passwordEncryptor.Decode(password, key);
 
                 return result;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 const string message = "Incorrect link";
-                _logger.LogError(message);
+                _logger.Error(e.Message);
 
                 throw new HttpResponseException(HttpStatusCode.BadRequest, message);
-            }
-        }
-
-        private string PrepareErrorMessage(PasswordGroup @group)
-        {
-            switch (@group.Status)
-            {
-                case PasswordStatus.Valid:
-                    throw new ArgumentException("Password is valid");
-                case PasswordStatus.Expired:
-                    return $"Link expired at {@group.ExpiresAt}";
-                case PasswordStatus.Used:
-                    return "Link has been already used";
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
         }
     }

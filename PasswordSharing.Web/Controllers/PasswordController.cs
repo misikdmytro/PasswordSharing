@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -63,7 +64,7 @@ namespace PasswordSharing.Web.Controllers
 		[ProducesResponseType(typeof(PasswordOutModel), 200)]
 		[ProducesResponseType(400)]
 		[ProducesResponseType(500)]
-		public async Task<IActionResult> Password([FromRoute, BindRequired]int passwordGroupId,
+		public async Task<IActionResult> Password([FromRoute, BindRequired]Guid passwordGroupId,
 			[FromQuery, BindRequired]string key)
 		{
 			var request = new RetrievePasswordRequest(key, passwordGroupId);

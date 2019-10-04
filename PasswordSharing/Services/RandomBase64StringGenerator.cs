@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using PasswordSharing.Contracts;
+using PasswordSharing.Interfaces;
 
 namespace PasswordSharing.Services
 {

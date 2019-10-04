@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using Moq;
 using PasswordSharing.Constants;
-using PasswordSharing.Contracts;
+using PasswordSharing.Interfaces;
 using PasswordSharing.Models;
 using PasswordSharing.Services;
 using Xunit;

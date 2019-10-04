@@ -5,15 +5,12 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using PasswordSharing.Contracts;
-using PasswordSharing.Events;
-using PasswordSharing.Events.Contracts;
 using PasswordSharing.Exceptions;
+using PasswordSharing.Interfaces;
 using PasswordSharing.Models;
 using PasswordSharing.Web.Exceptions;
 using PasswordSharing.Web.Models;
+using Serilog;
 
 namespace PasswordSharing.Web.MediatorRequests
 {
@@ -33,18 +30,15 @@ namespace PasswordSharing.Web.MediatorRequests
     public class GeneratePasswordLinkHandler : IRequestHandler<GeneratePasswordLinkRequest, GenerateLinkModel>
     {
         private readonly IPasswordEncryptor _passwordEncryptor;
-        private readonly IGroupEventHandler<PasswordGroupCreated> _eventHandler;
-        private readonly ILogger<GeneratePasswordLinkHandler> _logger;
+        private readonly IRedisClientFactory _redisClientFactory;
         private readonly IRsaKeyGenerator _keyGenerator;
+        private readonly ILogger _logger = Log.ForContext<GeneratePasswordLinkHandler>();
 
-        public GeneratePasswordLinkHandler(IPasswordEncryptor passwordEncryptor,
-            IGroupEventHandler<PasswordGroupCreated> eventHandler, 
-            ILogger<GeneratePasswordLinkHandler> logger, IRsaKeyGenerator keyGenerator)
+        public GeneratePasswordLinkHandler(IPasswordEncryptor passwordEncryptor, IRsaKeyGenerator keyGenerator, IRedisClientFactory redisClientFactory)
         {
             _passwordEncryptor = passwordEncryptor;
-            _eventHandler = eventHandler;
-            _logger = logger;
             _keyGenerator = keyGenerator;
+            _redisClientFactory = redisClientFactory;
         }
 
         public async Task<GenerateLinkModel> Handle(GeneratePasswordLinkRequest request, CancellationToken cancellationToken)
@@ -53,12 +47,16 @@ namespace PasswordSharing.Web.MediatorRequests
 
             var passwordGroup = new PasswordGroup
             {
-                ExpiresAt = DateTime.Now.Add(TimeSpan.FromSeconds(request.ExpiresIn)),
+                Id = Guid.NewGuid(),
                 Passwords = request.Passwords.Select(password => Handle(password, key)).ToArray(),
-                Status = PasswordStatus.Valid
             };
 
-            await _eventHandler.When(new PasswordGroupCreated(passwordGroup));
+            var expiration = TimeSpan.FromSeconds(request.ExpiresIn);
+
+            _logger.Information("Create new group {@group} for {@expiration}", passwordGroup, expiration);
+
+            var redisClient = _redisClientFactory.GetClient();
+            await redisClient.SetAsync(new PasswordGroupKey(passwordGroup.Id), passwordGroup, expiration);
 
             return new GenerateLinkModel
             {
@@ -73,14 +71,14 @@ namespace PasswordSharing.Web.MediatorRequests
             {
                 var password = _passwordEncryptor.Encode(passwordStr, key);
                 
-                _logger.LogDebug($"Password model - {JsonConvert.SerializeObject(password)}");
+                _logger.Debug("Password model {@password}", password);
 
                 return password;
             }
-            catch (BadLengthException)
+            catch (BadLengthException ble)
             {
                 const string message = "One of passwords is too long";
-                _logger.LogError(message);
+                _logger.Error(ble.Message);
 
                 throw new HttpResponseException(HttpStatusCode.BadRequest, message);
             }

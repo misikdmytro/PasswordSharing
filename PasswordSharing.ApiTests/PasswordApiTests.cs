@@ -28,7 +28,10 @@ namespace PasswordSharing.ApiTests
             _factory = factory.WithWebHostBuilder(builder => builder
                 .ConfigureAppConfiguration((builderContext, config) =>
                 {
-                    config.AddJsonFile(Path.Combine(directory, "testsettings.json"), optional: false, reloadOnChange: true);
+					var env = builderContext.HostingEnvironment;
+
+                    config.AddJsonFile(Path.Combine(directory, "testsettings.json"), optional: false, reloadOnChange: true)
+						.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
                 }));
         }
 

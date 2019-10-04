@@ -1,15 +1,57 @@
 version: "3"
 services:
     web:
-        build: .
+        build: 
+            context: ./
+            dockerfile: ./Dockerfiles/src/Dockerfile
         ports:
-            - "8080:80"
+            - "8080:8080"
         depends_on:
-            - db
+            - redis
+            - elastic
+            - kibana
         environment:
             - ASPNETCORE_ENVIRONMENT=Docker
-    db:
-        image: "microsoft/mssql-server-windows-express"
+    unit:
+        build: 
+            context: ./
+            dockerfile: ./Dockerfiles/unit/Dockerfile
+    api:
+        build: 
+            context: ./
+            dockerfile: ./Dockerfiles/api/Dockerfile
+        depends_on: 
+            - redis
         environment:
-            SA_PASSWORD: "Your_password123"
-            ACCEPT_EULA: "Y"
+            - ASPNETCORE_ENVIRONMENT=Docker
+    redis:
+        image: "redis"
+        container_name: cache
+        command: ["redis-server", "--appendonly", "yes"]
+        hostname: redis
+        ports:
+            - "6379:6379"
+    elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        hostname: elastic
+        container_name: elasticsearch
+        environment:
+            - cluster.name=docker-cluster
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+    kibana:
+        image: docker.elastic.co/kibana/kibana:7.4.0
+        environment: 
+            ELASTICSEARCH_URL: http://elasticsearch:9200
+        ports:
+            - "5601:5601"
+        depends_on: 
+            - elastic

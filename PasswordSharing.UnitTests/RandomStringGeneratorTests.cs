@@ -1,4 +1,4 @@
-﻿using PasswordSharing.Contracts;
+﻿using PasswordSharing.Interfaces;
 using PasswordSharing.Services;
 using Shouldly;
 using Xunit;

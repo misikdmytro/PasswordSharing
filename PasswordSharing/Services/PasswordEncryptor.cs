@@ -1,5 +1,5 @@
 ﻿using System.Security.Cryptography;
-using PasswordSharing.Contracts;
+using PasswordSharing.Interfaces;
 using PasswordSharing.Models;
 
 namespace PasswordSharing.Services

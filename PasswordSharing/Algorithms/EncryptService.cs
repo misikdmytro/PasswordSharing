@@ -2,8 +2,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using PasswordSharing.Constants;
-using PasswordSharing.Contracts;
 using PasswordSharing.Exceptions;
+using PasswordSharing.Interfaces;
 
 namespace PasswordSharing.Algorithms
 {
