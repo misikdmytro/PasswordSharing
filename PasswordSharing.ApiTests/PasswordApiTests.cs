@@ -8,6 +8,7 @@ using System.Net.Http.Formatting;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.AspNetCore.Hosting;
 using PasswordSharing.Web;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -26,12 +27,14 @@ namespace PasswordSharing.ApiTests
         {
             var directory = Directory.GetCurrentDirectory();
             _factory = factory.WithWebHostBuilder(builder => builder
+				.UseKestrel()
+				.UseContentRoot(Directory.GetCurrentDirectory())
                 .ConfigureAppConfiguration((builderContext, config) =>
                 {
-					var env = builderContext.HostingEnvironment;
+					var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
                     config.AddJsonFile(Path.Combine(directory, "appsettings.json"), optional: false, reloadOnChange: true)
-						.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+						.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true);
                 }));
         }
 
