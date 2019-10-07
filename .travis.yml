@@ -1,12 +1,21 @@
 language: csharp
-solution: PasswordSharing.sln
-mono: none
-dotnet: 2.1.0
-install:
-  - dotnet restore PasswordSharing.sln
+services:
+  - docker
+env:
+  - DOCKER_COMPOSE_VERSION=1.4.2
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker pull microsoft/dotnet:2.2-sdk
+  - docker pull redis
+  - docker pull docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+  - docker pull docker.elastic.co/kibana/kibana:7.4.0
 script:
-  - dotnet build
-  - dotnet test PasswordSharing.UnitTests/PasswordSharing.UnitTests.csproj
+  - docker-compose build --no-cache web
+  - docker-compose build --no-cache unit
+  - docker-compose up unit
 branches:
   only:
     - gh-pages
