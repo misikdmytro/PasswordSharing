@@ -1,6 +1,7 @@
 version: "3"
 services:
     web:
+        image: bastardd666/passwordsharing:web
         build: 
             context: ./
             dockerfile: ./Dockerfiles/src/Dockerfile
@@ -13,10 +14,12 @@ services:
         environment:
             - ASPNETCORE_ENVIRONMENT=Docker
     unit:
+        image: bastardd666/passwordsharing:unit
         build: 
             context: ./
             dockerfile: ./Dockerfiles/unit/Dockerfile
     api:
+        image: bastardd666/passwordsharing:api
         build: 
             context: ./
             dockerfile: ./Dockerfiles/api/Dockerfile
@@ -31,6 +34,8 @@ services:
         hostname: redis
         ports:
             - "6379:6379"
+        volumes:
+            - redis:/data
     elastic:
         image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
         ports:
@@ -47,6 +52,8 @@ services:
             memlock:
                 soft: -1
                 hard: -1
+        volumes:
+            - esdata:/usr/share/elasticsearch/data
     kibana:
         image: docker.elastic.co/kibana/kibana:7.4.0
         environment: 
@@ -55,3 +62,12 @@ services:
             - "5601:5601"
         depends_on: 
             - elastic
+        volumes:
+            - elastic-volume
+
+volumes:
+    esdata:
+        driver: local
+    redis:
+networks:
+  esnet:
