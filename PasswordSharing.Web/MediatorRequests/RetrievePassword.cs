@@ -48,7 +48,7 @@ namespace PasswordSharing.Web.MediatorRequests
             var oldCacheKey = new PasswordGroupKey(request.PasswordGroupId);
             var newCacheKey = new PasswordGroupKey(Guid.NewGuid());
 
-            _logger.Information("Renaming key {oldKey} to {newKey}", oldCacheKey, newCacheKey);
+            _logger.Information("Renaming key {@oldKey} to {@newKey}", oldCacheKey, newCacheKey);
 
             try
             {

@@ -4,16 +4,16 @@ namespace PasswordSharing.Models
 {
     public class PasswordGroupKey : ICacheKey
     {
-        private readonly Guid _groupId;
+        public Guid GroupId { get; }
 
         public PasswordGroupKey(Guid groupId)
         {
-            _groupId = groupId;
+            GroupId = groupId;
         }
 
         public string ExtractKey()
         {
-            return $"password_group_{_groupId}";
+            return $"password_group_{GroupId}";
         }
     }
 }
