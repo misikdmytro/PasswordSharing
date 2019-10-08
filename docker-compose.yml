@@ -69,5 +69,3 @@ volumes:
     esdata:
         driver: local
     redis:
-networks:
-  esnet:
