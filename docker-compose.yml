@@ -10,7 +10,6 @@ services:
         depends_on:
             - redis
             - elastic
-            - kibana
         environment:
             - ASPNETCORE_ENVIRONMENT=Docker
     unit:
@@ -57,7 +56,7 @@ services:
     kibana:
         image: docker.elastic.co/kibana/kibana:7.4.0
         environment: 
-            ELASTICSEARCH_URL: http://elasticsearch:9200
+            ELASTICSEARCH_HOSTS: http://elasticsearch:9200
         ports:
             - "5601:5601"
         depends_on: 
