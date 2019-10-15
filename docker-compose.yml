@@ -2,6 +2,7 @@ version: "3"
 services:
     web:
         image: bastardd666/passwordsharing:web
+        container_name: web
         build: 
             context: ./
             dockerfile: ./Dockerfiles/src/Dockerfile
@@ -10,15 +11,18 @@ services:
         depends_on:
             - redis
             - elastic
+            - consul
         environment:
             - ASPNETCORE_ENVIRONMENT=Docker
     unit:
         image: bastardd666/passwordsharing:unit
+        container_name: unittests
         build: 
             context: ./
             dockerfile: ./Dockerfiles/unit/Dockerfile
     api:
         image: bastardd666/passwordsharing:api
+        container_name: apitests
         build: 
             context: ./
             dockerfile: ./Dockerfiles/api/Dockerfile
@@ -55,16 +59,30 @@ services:
             - esdata:/usr/share/elasticsearch/data
     kibana:
         image: docker.elastic.co/kibana/kibana:7.4.0
+        container_name: kibana
         environment: 
             ELASTICSEARCH_HOSTS: http://elasticsearch:9200
         ports:
             - "5601:5601"
         depends_on: 
             - elastic
+    consul:
+        image: bitnami/consul:latest
         volumes:
-            - elastic-volume
+            - consuldata:/bitnami
+        hostname: consul
+        container_name: consul
+        ports:
+            - '8300:8300'
+            - '8301:8301'
+            - '8301:8301/udp'
+            - '8500:8500'
+            - '8600:8600'
+            - '8600:8600/udp'
+
 
 volumes:
     esdata:
         driver: local
+    consuldata:
     redis:

@@ -6,5 +6,8 @@ namespace PasswordSharing.Web.Configs
     {
         [JsonProperty("connectionStrings", Required = Required.Always)]
         public ConnectionStrings ConnectionStrings { get; set; }
+
+        [JsonProperty("consul", Required = Required.Default)]
+        public ConsulConfig Consul { get; set; }
     }
 }
