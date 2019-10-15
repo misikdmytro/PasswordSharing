@@ -140,11 +140,11 @@ namespace PasswordSharing.Web
 
                 var registration = new AgentServiceRegistration
                 {
-                    ID = $"{appConfig.Consul.ServiceId}-{uri.Port}",
+                    ID = $"{appConfig.Consul.ServiceId}_{uri.Port}",
                     Name = appConfig.Consul.ServiceName,
-                    Address = $"{uri.Scheme}://{uri.Host}",
+                    Address = $"{uri.Host}",
                     Port = uri.Port,
-                    Tags = new[] { "microservice", "password", "sharing" },
+                    Tags = new[] { "microservice", "password", "sharing", $"urlprefix-/{appConfig.Consul.ServiceName} strip=/{appConfig.Consul.ServiceName}" },
                     Checks = new AgentServiceCheck[]
                     {
                         new AgentCheckRegistration

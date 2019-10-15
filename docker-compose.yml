@@ -79,10 +79,20 @@ services:
             - '8500:8500'
             - '8600:8600'
             - '8600:8600/udp'
+    fabio:
+        image: fabiolb/fabio
+        volumes:
+            - ./Dockerfiles/fabio/fabio.properties:/etc/fabio/fabio.properties
+            - fabiodata:/etc/fabio:ro
+        container_name: fabio
+        ports:
+            - "9998:9998"
+            - "9999:9999"
 
 
 volumes:
     esdata:
         driver: local
     consuldata:
+    fabiodata:
     redis:
