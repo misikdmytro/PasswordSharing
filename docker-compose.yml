@@ -10,8 +10,6 @@ services:
             - "8080:8080"
         depends_on:
             - redis
-            - elastic
-            - consul
         environment:
             - ASPNETCORE_ENVIRONMENT=Docker
     unit:
