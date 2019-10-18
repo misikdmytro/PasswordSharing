@@ -9,5 +9,8 @@ namespace PasswordSharing.Web.Configs
 
         [JsonProperty("consul", Required = Required.Default)]
         public ConsulConfig Consul { get; set; }
+
+        [JsonProperty("fabio", Required = Required.Default)]
+        public FabioConfig Fabio { get; set; }
     }
 }

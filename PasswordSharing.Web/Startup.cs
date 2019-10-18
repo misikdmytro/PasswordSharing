@@ -103,6 +103,9 @@ namespace PasswordSharing.Web
 
             var appConfig = Configuration.GetSection("service").Get<ApplicationConfig>();
 
+            services.AddSingleton(appConfig.Consul ?? new ConsulConfig());
+            services.AddSingleton(appConfig.Fabio ?? new FabioConfig());
+
             var connectionMultiplexer = ConnectionMultiplexer.Connect(appConfig.ConnectionStrings.Redis.ConnectionString);
             var redisClientFactory = new RedisClientFactory(connectionMultiplexer, appConfig.ConnectionStrings.Redis.DefaultExpiration);
 
@@ -140,7 +143,7 @@ namespace PasswordSharing.Web
 
                 var registration = new AgentServiceRegistration
                 {
-                    ID = $"{appConfig.Consul.ServiceId}_{uri.Port}",
+                    ID = $"{appConfig.Consul.ServiceId}_{Environment.MachineName}_{uri.Port}",
                     Name = appConfig.Consul.ServiceName,
                     Address = $"{uri.Host}",
                     Port = uri.Port,

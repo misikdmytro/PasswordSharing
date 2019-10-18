@@ -1,13 +1,27 @@
 version: "3"
 services:
-    web:
+    web1:
         image: bastardd666/passwordsharing:web
-        container_name: web
+        container_name: web1
+        command: "/bin/bash ./entrypoint.sh 'http://web1:8080'"
         build: 
             context: ./
             dockerfile: ./Dockerfiles/src/Dockerfile
         ports:
             - "8080:8080"
+        depends_on:
+            - redis
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Docker
+    web2:
+        image: bastardd666/passwordsharing:web
+        container_name: web2
+        command: "/bin/bash ./entrypoint.sh 'http://web2:8081'"
+        build: 
+            context: ./
+            dockerfile: ./Dockerfiles/src/Dockerfile
+        ports:
+            - "8081:8081"
         depends_on:
             - redis
         environment:
@@ -79,6 +93,7 @@ services:
             - '8600:8600/udp'
     fabio:
         image: fabiolb/fabio
+        hostname: fabio
         volumes:
             - ./Dockerfiles/fabio/fabio.properties:/etc/fabio/fabio.properties
             - fabiodata:/etc/fabio:ro
